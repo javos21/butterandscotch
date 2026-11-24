@@ -29,7 +29,16 @@ function imageRemotePatterns(): RemotePattern[] {
   return patterns;
 }
 
+/** The receipt logo is read from disk at render time, so output tracing must copy it into each route that renders receipts. */
+const RECEIPT_LOGO = ["./public/brand/logo-red.png"];
+
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/order/[token]/receipt": RECEIPT_LOGO,
+    "/admin/orders/[id]/receipt": RECEIPT_LOGO,
+    "/admin/payments": RECEIPT_LOGO,
+    "/admin/orders/[id]": RECEIPT_LOGO,
+  },
   images: {
     remotePatterns: imageRemotePatterns(),
     // 90 for product photos, where softness shows; 75 (the default) everywhere else.

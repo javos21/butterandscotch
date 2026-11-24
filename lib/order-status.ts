@@ -46,3 +46,43 @@ export function countsTowardCap(s: OrderStatus): boolean {
 export function paymentOpen(s: OrderStatus): boolean {
   return s === "awaiting_payment";
 }
+
+/** Actions staff can take on an order. Customer actions are handled elsewhere. */
+export type StaffAction =
+  | "confirm_proof"
+  | "reject_proof"
+  | "set_fee"
+  | "mark_ready"
+  | "mark_completed"
+  | "cancel";
+
+const STAFF_ACTION_VERB: Record<StaffAction, string> = {
+  confirm_proof: "confirm proof on",
+  reject_proof: "reject proof on",
+  set_fee: "set the fee on",
+  mark_ready: "mark ready",
+  mark_completed: "mark completed",
+  cancel: "cancel",
+};
+
+const STAFF_TRANSITIONS: Partial<Record<StaffAction, Partial<Record<OrderStatus, OrderStatus>>>> = {
+  confirm_proof: { proof_submitted: "confirmed" },
+  reject_proof: { proof_submitted: "awaiting_payment" },
+  set_fee: { awaiting_quote: "awaiting_payment" },
+  mark_ready: { confirmed: "ready" },
+  mark_completed: { ready: "completed", confirmed: "completed" },
+};
+
+/** The status an order moves to when staff take an action. Throws OrderStateError if not allowed. */
+export function nextStatus(from: OrderStatus, action: StaffAction): OrderStatus {
+  let to: OrderStatus | undefined;
+  if (action === "cancel") {
+    if (from !== "completed" && from !== "cancelled") to = "cancelled";
+  } else {
+    to = STAFF_TRANSITIONS[action]?.[from];
+  }
+  if (to) return to;
+  throw new OrderStateError(
+    `Can't ${STAFF_ACTION_VERB[action]} an order that is ${STATUS_LABEL[from].toLowerCase()}`,
+  );
+}

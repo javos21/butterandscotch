@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronsUpDown, House, LogOut, type LucideIcon } from "lucide-react";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -22,14 +22,11 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-// Task 5 and plan 2 add the real navigation. For now the only item is Home.
-const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/admin", label: "Home", icon: House },
-];
+import { ADMIN_NAV, isActive } from "./nav-items";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -37,7 +34,13 @@ function initials(name: string): string {
   return name.trim().slice(0, 2).toUpperCase();
 }
 
-export function AdminSidebar({ staffName }: { staffName: string }) {
+export function AdminSidebar({
+  staffName,
+  proofsToCheck,
+}: {
+  staffName: string;
+  proofsToCheck: number;
+}) {
   const pathname = usePathname();
 
   return (
@@ -64,21 +67,35 @@ export function AdminSidebar({ staffName }: { staffName: string }) {
         <SidebarGroup>
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <nav aria-label="Admin">
+              <SidebarMenu>
+                {ADMIN_NAV.map((item) => {
+                  const active = isActive(pathname, item.href);
+                  const badge = item.label === "Payments" ? proofsToCheck : 0;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={item.label}
+                        className="h-11"
+                      >
+                        <Link href={item.href} aria-current={active ? "page" : undefined}>
+                          <item.icon />
+                          <span>{item.label}</span>
+                          {badge > 0 ? (
+                            <span className="sr-only">
+                              , {badge} {badge === 1 ? "proof" : "proofs"} to check
+                            </span>
+                          ) : null}
+                        </Link>
+                      </SidebarMenuButton>
+                      {badge > 0 ? <SidebarMenuBadge aria-hidden="true">{badge}</SidebarMenuBadge> : null}
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </nav>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

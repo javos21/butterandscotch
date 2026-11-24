@@ -447,3 +447,311 @@ describe("order links emails", () => {
     expect(sent[0].html).toContain(`${SITE}/order/tok-old`);
   });
 });
+
+describe("brevoProvider attachments", () => {
+  const from = { email: "orders@example.test", name: "Butter & Scotch" };
+
+  test("maps attachments to Brevo's attachment array with base64 content", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ messageId: "<att@smtp>" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await brevoProvider("test-key", from).send({
+      to: "a@example.test",
+      subject: "s",
+      html: "h",
+      attachments: [{ filename: "x.pdf", content: Buffer.from("pdf-bytes") }],
+    });
+
+    const init = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1];
+    const body = JSON.parse(init.body as string);
+    expect(body.attachment[0].name).toBe("x.pdf");
+    expect(body.attachment[0].content).toBe(Buffer.from("pdf-bytes").toString("base64"));
+  });
+
+  test("omits the attachment key when there are no attachments", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ messageId: "<n@smtp>" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await brevoProvider("test-key", from).send({ to: "a@example.test", subject: "s", html: "h" });
+
+    const init = (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1];
+    expect(JSON.parse(init.body as string)).not.toHaveProperty("attachment");
+  });
+});
+
+describe("consoleProvider attachments", () => {
+  test("logs attachment names and byte sizes", async () => {
+    const info = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await consoleProvider().send({
+      to: "a@example.test",
+      subject: "s",
+      html: "h",
+      attachments: [{ filename: "x.pdf", content: Buffer.from("pdf-bytes") }],
+    });
+
+    const line = info.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(line).toContain("x.pdf");
+    expect(line).toContain("9 bytes");
+  });
+});
+
+describe("sendTemplate attachments", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://shop.test");
+  });
+
+  test("passes attachments through to the provider", async () => {
+    const sent: { attachments?: { filename: string; content: Buffer }[] }[] = [];
+    const provider: EmailProvider = {
+      async send(msg) {
+        sent.push(msg);
+        return { id: "rec-1" };
+      },
+    };
+    const attachments = [{ filename: "Butter-and-Scotch-receipt-BS-0030.pdf", content: Buffer.from("p") }];
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "order_confirmed",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0030",
+          token: "tok-att",
+          customerName: "Asha",
+          fulfilDate: "2026-11-28",
+          fulfilment: "pickup",
+          totalCents: 60000,
+        },
+        attachments,
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].attachments).toEqual(attachments);
+  });
+});
+
+describe("staff action emails", () => {
+  const SITE = "https://shop.test";
+  const TOKEN = "tok-staff999";
+
+  function recordingProvider() {
+    const sent: { to: string; subject: string; html: string }[] = [];
+    const provider: EmailProvider = {
+      async send(msg) {
+        sent.push(msg);
+        return { id: `rec-${sent.length}` };
+      },
+    };
+    return { sent, provider };
+  }
+
+  const bank = {
+    bank: "Sample Bank",
+    account_name: "Butter and Scotch Ltd",
+    account_type: "Chequing",
+    transit: "00100",
+    account_no_same_bank: "1234567",
+    account_no_other_bank: "7654321",
+  };
+
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
+  });
+
+  test("order_confirmed says receipt attached, shows the fulfilment date and links to the order", async () => {
+    const { sent, provider } = recordingProvider();
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "order_confirmed",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0020",
+          token: TOKEN,
+          customerName: "Asha",
+          fulfilDate: "2026-11-28",
+          fulfilment: "delivery",
+          totalCents: 64000,
+        },
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].subject).toBe("Order BS-0020 confirmed — receipt attached");
+    expect(sent[0].html).toContain("Saturday, 28 November 2026");
+    expect(sent[0].html).toContain("TT$640.00");
+    expect(sent[0].html).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+
+  test("proof_rejected shows the reason and the total, and links to the order", async () => {
+    const { sent, provider } = recordingProvider();
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "proof_rejected",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0021",
+          token: TOKEN,
+          customerName: "Asha",
+          reason: "The transfer was for the wrong amount",
+          totalCents: 64000,
+        },
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].subject).toBe("Action needed: payment proof for BS-0021");
+    expect(sent[0].html).toContain("The transfer was for the wrong amount");
+    expect(sent[0].html).toContain("TT$640.00");
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+
+  test("total_ready shows the formatted delivery fee and total, bank details and a link", async () => {
+    const { sent, provider } = recordingProvider();
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "total_ready",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0022",
+          token: TOKEN,
+          customerName: "Asha",
+          deliveryFeeCents: 5000,
+          totalCents: 65000,
+          bank,
+        },
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].subject).toBe("Your total for BS-0022 is ready — pay to confirm");
+    expect(sent[0].html).toContain("TT$50.00");
+    expect(sent[0].html).toContain("TT$650.00");
+    expect(sent[0].html).toContain("Sample Bank");
+    expect(sent[0].html).toContain("Account # (from Scotiabank)");
+    expect(sent[0].html).toContain("Account # (from another bank)");
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+
+  test("date_changed shows the old and new dates in words and links to the order", async () => {
+    const { sent, provider } = recordingProvider();
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "date_changed",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0023",
+          token: TOKEN,
+          customerName: "Asha",
+          oldDate: "2026-11-28",
+          newDate: "2026-12-05",
+        },
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].subject).toBe("New date for order BS-0023");
+    expect(sent[0].html).toContain("Saturday, 28 November 2026");
+    expect(sent[0].html).toContain("Saturday, 5 December 2026");
+    expect(sent[0].html).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+
+  test("order_cancelled shows the reason and links to the order", async () => {
+    const { sent, provider } = recordingProvider();
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "order_cancelled",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0024",
+          token: TOKEN,
+          customerName: "Asha",
+          reason: "We are closed that day",
+        },
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].subject).toBe("Order BS-0024 cancelled");
+    expect(sent[0].html).toContain("We are closed that day");
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+
+  test("order_ready for pickup uses the pickup subject and shows the pickup info", async () => {
+    const { sent, provider } = recordingProvider();
+
+    const result = await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "order_ready",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0025",
+          token: TOKEN,
+          customerName: "Asha",
+          fulfilment: "pickup",
+          pickupInfo: "Collect from the shop door after 2pm",
+        },
+      },
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(sent[0].subject).toBe("Order BS-0025 is ready for pickup");
+    expect(sent[0].html).toContain("Collect from the shop door after 2pm");
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+
+  test("order_ready for delivery uses the on-its-way subject", async () => {
+    const { sent, provider } = recordingProvider();
+
+    await sendTemplate(
+      { provider, log: async () => {} },
+      {
+        orderId: null,
+        template: "order_ready",
+        to: "asha@example.test",
+        data: {
+          orderNumber: "BS-0026",
+          token: TOKEN,
+          customerName: "Asha",
+          fulfilment: "delivery",
+          pickupInfo: null,
+        },
+      },
+    );
+
+    expect(sent[0].subject).toBe("Order BS-0026 is on its way");
+    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
+  });
+});

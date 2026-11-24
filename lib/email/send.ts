@@ -5,7 +5,14 @@ import StaffNewOrder from "@/lib/email/templates/StaffNewOrder";
 import ProofReceived from "@/lib/email/templates/ProofReceived";
 import StaffProofReceived from "@/lib/email/templates/StaffProofReceived";
 import OrderLinks from "@/lib/email/templates/OrderLinks";
+import OrderConfirmed from "@/lib/email/templates/OrderConfirmed";
+import ProofRejected from "@/lib/email/templates/ProofRejected";
+import TotalReady from "@/lib/email/templates/TotalReady";
+import DateChanged from "@/lib/email/templates/DateChanged";
+import OrderCancelled from "@/lib/email/templates/OrderCancelled";
+import OrderReady from "@/lib/email/templates/OrderReady";
 import type {
+  EmailAttachment,
   EmailDeps,
   EmailProvider,
   TemplateData,
@@ -13,6 +20,7 @@ import type {
 } from "@/lib/email/types";
 
 export type {
+  EmailAttachment,
   EmailDeps,
   EmailLogEntry,
   EmailProvider,
@@ -28,6 +36,12 @@ const TEMPLATES: { [K in TemplateName]: ComponentType<TemplateData[K]> } = {
   proof_received: ProofReceived,
   staff_proof_received: StaffProofReceived,
   order_links: OrderLinks,
+  order_confirmed: OrderConfirmed,
+  proof_rejected: ProofRejected,
+  total_ready: TotalReady,
+  date_changed: DateChanged,
+  order_cancelled: OrderCancelled,
+  order_ready: OrderReady,
 };
 
 const SUBJECTS: { [K in TemplateName]: (data: TemplateData[K]) => string } = {
@@ -39,6 +53,15 @@ const SUBJECTS: { [K in TemplateName]: (data: TemplateData[K]) => string } = {
   proof_received: (data) => `We received your payment proof for ${data.orderNumber}`,
   staff_proof_received: (data) => `Payment proof to check for ${data.orderNumber}`,
   order_links: () => "Your Butter & Scotch orders",
+  order_confirmed: (data) => `Order ${data.orderNumber} confirmed — receipt attached`,
+  proof_rejected: (data) => `Action needed: payment proof for ${data.orderNumber}`,
+  total_ready: (data) => `Your total for ${data.orderNumber} is ready — pay to confirm`,
+  date_changed: (data) => `New date for order ${data.orderNumber}`,
+  order_cancelled: (data) => `Order ${data.orderNumber} cancelled`,
+  order_ready: (data) =>
+    data.fulfilment === "pickup"
+      ? `Order ${data.orderNumber} is ready for pickup`
+      : `Order ${data.orderNumber} is on its way`,
 };
 
 async function renderTemplate<K extends TemplateName>(
@@ -55,7 +78,7 @@ export function brevoProvider(
   from: { email: string; name: string },
 ): EmailProvider {
   return {
-    async send({ to, subject, html, replyTo }) {
+    async send({ to, subject, html, replyTo, attachments }) {
       const res = await fetch(BREVO_URL, {
         method: "POST",
         // A hung provider must not stall the action that sent the email.
@@ -71,6 +94,14 @@ export function brevoProvider(
           subject,
           htmlContent: html,
           ...(replyTo ? { replyTo: { email: replyTo } } : {}),
+          ...(attachments && attachments.length > 0
+            ? {
+                attachment: attachments.map((file) => ({
+                  name: file.filename,
+                  content: file.content.toString("base64"),
+                })),
+              }
+            : {}),
         }),
       });
       const json = (await res.json().catch(() => ({}))) as {
@@ -92,11 +123,16 @@ let consoleCount = 0;
 /** Development provider: logs the email instead of sending it. */
 export function consoleProvider(): EmailProvider {
   return {
-    async send({ to, subject, html, replyTo }) {
+    async send({ to, subject, html, replyTo, attachments }) {
       consoleCount += 1;
       console.log(
         `[email:console] to=${to} subject="${subject}" bytes=${html.length}` +
-          (replyTo ? ` replyTo=${replyTo}` : ""),
+          (replyTo ? ` replyTo=${replyTo}` : "") +
+          (attachments && attachments.length > 0
+            ? ` attachments=${attachments
+                .map((file) => `${file.filename} (${file.content.length} bytes)`)
+                .join(", ")}`
+            : ""),
       );
       return { id: `console-${consoleCount}` };
     },
@@ -115,6 +151,7 @@ export async function sendTemplate<K extends TemplateName>(
     to: string;
     data: TemplateData[K];
     replyTo?: string;
+    attachments?: EmailAttachment[];
   },
 ): Promise<{ ok: boolean }> {
   let providerId: string | null = null;
@@ -128,6 +165,7 @@ export async function sendTemplate<K extends TemplateName>(
       subject,
       html,
       replyTo: args.replyTo,
+      attachments: args.attachments,
     });
     providerId = result.id;
   } catch (err) {

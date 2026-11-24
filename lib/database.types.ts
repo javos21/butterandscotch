@@ -312,6 +312,9 @@ isOneToOne: false
                            },
 "public_unavailable_dates":
 { Args: { "from_date": string,"to_date": string }; Returns: string[]
+                           },
+"staff_change_fulfil_date":
+{ Args: { "p_new_date": string,"p_order_id": string,"p_override_cap": boolean }; Returns: string
                            }
           }
           Enums: {
