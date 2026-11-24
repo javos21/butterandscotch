@@ -13,6 +13,7 @@
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",
     "@react-email/components": "^1.0.12",
+    "@react-pdf/renderer": "^4.9.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "class-variance-authority": "^0.7.1",
@@ -47,5 +48,8 @@
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@react-pdf/hyphenate": "0.1.0"
   }
 }

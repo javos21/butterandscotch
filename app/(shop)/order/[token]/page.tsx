@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { BankDetails } from "@/components/shop/BankDetails";
 import { OrderStatusBanner } from "@/components/shop/OrderStatusBanner";
 import { ProofUploadForm } from "@/components/shop/ProofUploadForm";
+import { Button } from "@/components/ui/button";
 import { formatFulfilDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/money";
 import { getOrderView } from "@/lib/orders/get-order";
 import { waLink } from "@/lib/phone";
+import { hasReceipt } from "@/lib/receipt/receipt-data";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,12 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
         statusLabel={order.statusLabel}
         latestPayment={order.latestPayment}
       />
+
+      {hasReceipt(order.status) && (
+        <Button asChild variant="outline" className="min-h-11 w-full">
+          <a href={`/order/${token}/receipt`}>Download receipt</a>
+        </Button>
+      )}
 
       <section className="space-y-3">
         <h1 className="text-2xl font-semibold">Order {order.orderNumber}</h1>
