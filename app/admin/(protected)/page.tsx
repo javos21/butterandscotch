@@ -62,7 +62,12 @@ export default async function AdminTodayPage() {
           <section key={day.date} aria-labelledby={headingId} className="space-y-3 border-t pt-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id={headingId} className="text-base font-semibold">
-                {formatFulfilDate(day.date)}
+                <Link
+                  href={`/admin/orders?date=${day.date}&status=open`}
+                  className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+                >
+                  {formatFulfilDate(day.date)}
+                </Link>
               </h2>
               {day.orders.length > 0 ? (
                 <span className="text-sm text-muted-foreground">{orderCountLabel(day.orders.length)}</span>

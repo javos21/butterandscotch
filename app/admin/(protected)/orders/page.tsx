@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listOrders } from "@/lib/admin/queries";
 import { requireStaff } from "@/lib/auth/require-staff";
+import { isIsoDate } from "@/lib/dates";
 import { formatFulfilDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/money";
 
 const PAGE_SIZE = 25;
 
-type SearchParams = { status?: string; q?: string; page?: string };
+type SearchParams = { status?: string; q?: string; date?: string; page?: string };
 
 function isFilter(value: string | undefined): value is OrderFilterValue {
   return ORDER_FILTERS.some((filter) => filter.value === value);
@@ -25,8 +26,10 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const q = (params.q ?? "").trim().slice(0, 100);
   const parsedPage = Number.parseInt(params.page ?? "1", 10);
   const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
+  // An impossible or malformed date is ignored, the same as no date.
+  const date = params.date && isIsoDate(params.date) ? params.date : undefined;
 
-  const { rows, total } = await listOrders({ status, q, page });
+  const { rows, total } = await listOrders({ status, q, date, page });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filter = ORDER_FILTERS.find((f) => f.value === status);
   const emptyText = q ? `No orders match "${q}"` : (filter?.empty ?? "No orders");
@@ -35,7 +38,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     <div className="space-y-5">
       <h1 className="text-xl font-semibold">Orders</h1>
 
-      <OrderFilters active={status} q={q} />
+      <OrderFilters active={status} q={q} date={date} />
 
       {rows.length === 0 ? (
         <p className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
@@ -104,11 +107,19 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
       {totalPages > 1 ? (
         <nav aria-label="Pagination" className="flex items-center justify-between gap-3">
-          <PageButton direction="previous" disabled={page <= 1} href={ordersHref({ status, q, page: page - 1 })} />
+          <PageButton
+            direction="previous"
+            disabled={page <= 1}
+            href={ordersHref({ status, q, date, page: page - 1 })}
+          />
           <span className="text-sm text-muted-foreground tabular-nums">
             Page {page} of {totalPages}
           </span>
-          <PageButton direction="next" disabled={page >= totalPages} href={ordersHref({ status, q, page: page + 1 })} />
+          <PageButton
+            direction="next"
+            disabled={page >= totalPages}
+            href={ordersHref({ status, q, date, page: page + 1 })}
+          />
         </nav>
       ) : null}
     </div>
