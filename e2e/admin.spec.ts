@@ -44,6 +44,7 @@ test("confirm a proof", async ({ page }, testInfo) => {
   const orderId = await openProofForReview(admin, order.orderNumber);
 
   await admin.getByRole("button", { name: "Confirm payment" }).click();
+  await admin.getByRole("dialog").getByRole("button", { name: "Yes, confirm" }).click();
   await expect(admin.getByText("Saved", { exact: true })).toBeVisible();
 
   await page.reload();

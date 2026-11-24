@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { CheckCircle2, FileText, Loader2, XCircle } from "lucide-react";
 import { verifyPaymentAction } from "@/app/admin/(protected)/payments/actions";
-import { toastActionResult } from "@/components/admin/action-toast";
+import { runStaffAction } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import { isPdfPath } from "@/lib/admin/proof-file";
 import {
@@ -36,14 +36,15 @@ export type ProofReviewCardProps = {
 export function ProofReviewCard({ paymentId, receiptPath, receiptUrl, reference, totalCents }: ProofReviewCardProps) {
   const [isPending, startTransition] = useTransition();
   const [pendingDecision, setPendingDecision] = useState<"confirm" | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const shown = { receiptPath, reference };
 
   function confirm() {
     setPendingDecision("confirm");
     startTransition(async () => {
-      const result = await verifyPaymentAction({ paymentId, decision: "confirm", shown });
-      toastActionResult(result);
+      await runStaffAction(() => verifyPaymentAction({ paymentId, decision: "confirm", shown }));
       setPendingDecision(null);
+      setConfirmOpen(false);
     });
   }
 
@@ -94,15 +95,33 @@ export function ProofReviewCard({ paymentId, receiptPath, receiptUrl, reference,
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <RejectProofDialog paymentId={paymentId} shown={shown} disabled={isPending} />
-        <Button type="button" className="min-h-11 gap-2" onClick={confirm} disabled={isPending}>
-          {pendingDecision === "confirm" ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <CheckCircle2 className="size-4" aria-hidden="true" />
-          )}
+        <Button type="button" className="min-h-11 gap-2" onClick={() => setConfirmOpen(true)} disabled={isPending}>
+          <CheckCircle2 className="size-4" aria-hidden="true" />
           Confirm payment
         </Button>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={(next) => !isPending && setConfirmOpen(next)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm {formatMoney(totalCents)} received?</DialogTitle>
+            <DialogDescription>
+              The order is confirmed and the customer is emailed their receipt.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="min-h-11" onClick={() => setConfirmOpen(false)} disabled={isPending}>
+              Back
+            </Button>
+            <Button type="button" className="min-h-11 gap-2" onClick={confirm} disabled={isPending}>
+              {pendingDecision === "confirm" ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              Yes, confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
@@ -129,8 +148,9 @@ function RejectProofDialog({
     }
     setError(null);
     startTransition(async () => {
-      const result = await verifyPaymentAction({ paymentId, decision: "reject", reason: trimmed, shown });
-      toastActionResult(result);
+      const result = await runStaffAction(() =>
+        verifyPaymentAction({ paymentId, decision: "reject", reason: trimmed, shown }),
+      );
       if ("ok" in result) {
         setOpen(false);
         setReason("");

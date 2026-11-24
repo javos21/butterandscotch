@@ -61,12 +61,13 @@ export function adminOrderRepo(staffDb: StaffClient): AdminOrderRepo {
     },
 
     async changeFulfilDate(orderId, newDate, overrideCap) {
-      const { error } = await staffDb.rpc("staff_change_fulfil_date", {
+      const { data, error } = await staffDb.rpc("staff_change_fulfil_date", {
         p_order_id: orderId,
         p_new_date: newDate,
         p_override_cap: overrideCap,
       });
       if (error) throw new Error(error.message);
+      return data;
     },
 
     async hasSubmittedPayment(orderId) {

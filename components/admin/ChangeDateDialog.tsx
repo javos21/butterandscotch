@@ -3,7 +3,7 @@
 import { useId, useState, useTransition, type FormEvent } from "react";
 import { CalendarDays, Loader2 } from "lucide-react";
 import { changeDateAction } from "@/app/admin/(protected)/orders/[id]/actions";
-import { toastActionResult } from "@/components/admin/action-toast";
+import { runStaffAction } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -48,8 +48,7 @@ export function ChangeDateDialog({
     }
     setError(null);
     startTransition(async () => {
-      const result = await changeDateAction({ orderId, newDate, overrideCap });
-      toastActionResult(result);
+      const result = await runStaffAction(() => changeDateAction({ orderId, newDate, overrideCap }));
       if ("ok" in result) {
         setOpen(false);
       } else {

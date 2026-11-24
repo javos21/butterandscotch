@@ -5,7 +5,7 @@ import { CheckCheck, Loader2, PackageCheck } from "lucide-react";
 import { markCompletedAction, markReadyAction } from "@/app/admin/(protected)/orders/[id]/actions";
 import { CancelOrderDialog } from "@/components/admin/CancelOrderDialog";
 import { ChangeDateDialog } from "@/components/admin/ChangeDateDialog";
-import { toastActionResult } from "@/components/admin/action-toast";
+import { runStaffAction } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -42,8 +42,7 @@ export function OrderActionsBar({
   function markReady() {
     setPending("ready");
     startTransition(async () => {
-      const result = await markReadyAction({ orderId, notify });
-      toastActionResult(result);
+      await runStaffAction(() => markReadyAction({ orderId, notify }));
       setPending(null);
     });
   }
@@ -51,8 +50,7 @@ export function OrderActionsBar({
   function markCompleted() {
     setPending("completed");
     startTransition(async () => {
-      const result = await markCompletedAction({ orderId });
-      toastActionResult(result);
+      await runStaffAction(() => markCompletedAction({ orderId }));
       setPending(null);
     });
   }

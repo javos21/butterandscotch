@@ -3,7 +3,7 @@
 import { useId, useState, useTransition, type FormEvent } from "react";
 import { Loader2, Ban } from "lucide-react";
 import { cancelOrderAction } from "@/app/admin/(protected)/orders/[id]/actions";
-import { toastActionResult } from "@/components/admin/action-toast";
+import { runStaffAction } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,8 +38,7 @@ export function CancelOrderDialog({ orderId, disabled }: { orderId: string; disa
     }
     setError(null);
     startTransition(async () => {
-      const result = await cancelOrderAction({ orderId, reason: trimmed });
-      toastActionResult(result);
+      const result = await runStaffAction(() => cancelOrderAction({ orderId, reason: trimmed }));
       if ("ok" in result) {
         setOpen(false);
         setReason("");

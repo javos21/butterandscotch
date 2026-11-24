@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 import { requestProofAgainAction } from "@/app/admin/(protected)/orders/[id]/actions";
-import { toastActionResult } from "@/components/admin/action-toast";
+import { runStaffAction } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 
 /** For a stuck order: asks the customer to upload their payment proof again. */
@@ -12,8 +12,7 @@ export function RequestProofAgainButton({ orderId }: { orderId: string }) {
 
   function request() {
     startTransition(async () => {
-      const result = await requestProofAgainAction({ orderId });
-      toastActionResult(result);
+      await runStaffAction(() => requestProofAgainAction({ orderId }));
     });
   }
 

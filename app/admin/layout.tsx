@@ -17,7 +17,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="admin-theme flex min-h-dvh flex-col bg-background font-sans text-foreground">
       <TooltipProvider>
         {children}
-        <Toaster position="bottom-right" />
+        {/* On phones the fixed tab bar sits at the bottom; lift toasts clear of it. */}
+        <Toaster position="bottom-right" mobileOffset={{ bottom: 88 }} />
       </TooltipProvider>
     </div>
   );

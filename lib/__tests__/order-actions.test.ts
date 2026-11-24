@@ -49,6 +49,8 @@ type State = {
   rpcCalls: { orderId: string; newDate: string; overrideCap: boolean }[];
   /** Message the date RPC raises, as the database exception text. */
   rpcError: string | null;
+  /** Runs at the start of the date RPC: simulates another move landing first. */
+  raceBeforeRpc: (() => void) | null;
   /** Runs inside updateOrder, before its status check: simulates a concurrent staff action. */
   raceBeforeUpdate: (() => void) | null;
   updateThrows: boolean;
@@ -82,6 +84,7 @@ function freshState(status: OrderStatus = "awaiting_quote", overrides: Partial<A
     events: [],
     rpcCalls: [],
     rpcError: null,
+    raceBeforeRpc: null,
     raceBeforeUpdate: null,
     updateThrows: false,
     submittedPayment: false,
@@ -112,9 +115,12 @@ function fakeRepo(state: State): AdminOrderRepo {
       return state.submittedPayment;
     },
     async changeFulfilDate(orderId, newDate, overrideCap) {
+      state.raceBeforeRpc?.();
       state.rpcCalls.push({ orderId, newDate, overrideCap });
       if (state.rpcError) throw new Error(state.rpcError);
+      const oldDate = state.order.fulfilDate;
       state.order.fulfilDate = newDate;
+      return oldDate;
     },
     async addEvent(_orderId, kind, detail, staffId) {
       state.events.push({ kind, detail, staffId });
@@ -232,6 +238,23 @@ describe("changeDate", () => {
     expect(mail.sent[0].subject).toBe("New date for order BS-0142");
     expect(mail.sent[0].html).toContain(formatFulfilDate("2026-11-28"));
     expect(mail.sent[0].html).toContain(formatFulfilDate(NEW_DATE));
+  });
+
+  test("emails the old date the RPC read under its lock, not the one read before it", async () => {
+    const state = freshState("confirmed");
+    // Another staff member moves the order between this action's read and the RPC.
+    state.raceBeforeRpc = () => {
+      state.order.fulfilDate = "2026-12-05";
+    };
+    const mail = recordingEmail();
+    const result = await changeDate(
+      { orderId: ORDER_ID, newDate: NEW_DATE, overrideCap: true },
+      deps(state, mail.email),
+    );
+
+    expect(result).toEqual({ ok: true, emailFailed: false });
+    expect(mail.sent[0].html).toContain(formatFulfilDate("2026-12-05"));
+    expect(mail.sent[0].html).not.toContain(formatFulfilDate("2026-11-28"));
   });
 
   test.each([

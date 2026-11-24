@@ -3,7 +3,7 @@
 import { useId, useState, useTransition, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { setDeliveryFeeAction } from "@/app/admin/(protected)/orders/[id]/actions";
-import { toastActionResult } from "@/components/admin/action-toast";
+import { runStaffAction } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,8 +28,7 @@ export function SetFeeForm({ orderId }: { orderId: string }) {
     }
     setError(null);
     startTransition(async () => {
-      const result = await setDeliveryFeeAction({ orderId, feeCents });
-      toastActionResult(result);
+      const result = await runStaffAction(() => setDeliveryFeeAction({ orderId, feeCents }));
       if ("error" in result) setError(result.error);
     });
   }

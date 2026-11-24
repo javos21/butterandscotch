@@ -1,5 +1,5 @@
 import { sendTemplate, type EmailDeps } from "@/lib/email/send";
-import { trinidadToday } from "@/lib/dates";
+import { isIsoDate, trinidadToday } from "@/lib/dates";
 import { nextStatus, OrderStateError, STATUS_LABEL, type OrderStatus, type StaffAction } from "@/lib/order-status";
 import type { BankDetails } from "@/lib/types";
 
@@ -53,8 +53,11 @@ export type OrderUpdate = {
 export type AdminOrderRepo = {
   findOrder(orderId: string): Promise<AdminOrder | null>;
   updateOrder(orderId: string, expectStatus: OrderStatus, set: OrderUpdate): Promise<boolean>;
-  /** Calls staff_change_fulfil_date. Throws with the database's exception text as the message. */
-  changeFulfilDate(orderId: string, newDate: string, overrideCap: boolean): Promise<void>;
+  /**
+   * Calls staff_change_fulfil_date and returns the date the order held under the lock, "YYYY-MM-DD".
+   * Throws with the database's exception text as the message.
+   */
+  changeFulfilDate(orderId: string, newDate: string, overrideCap: boolean): Promise<string>;
   /** True when the order has a payment row still in `submitted`. */
   hasSubmittedPayment(orderId: string): Promise<boolean>;
   addEvent(orderId: string, kind: string, detail: Record<string, unknown>, staffId: string): Promise<void>;
@@ -139,12 +142,6 @@ async function finish(deps: OrderActionDeps, send: () => Promise<boolean>): Prom
   return { ok: true, emailFailed };
 }
 
-function isIsoDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
-
 /** Sets the delivery fee on an awaiting-quote order, opens the payment window and emails the total. */
 export async function setDeliveryFee(input: SetDeliveryFeeInput, deps: OrderActionDeps): Promise<OrderActionResult> {
   const { feeCents } = input;
@@ -195,8 +192,10 @@ export async function changeDate(input: ChangeDateInput, deps: OrderActionDeps):
   if (!order) return { error: ORDER_NOT_FOUND };
   if (newDate === order.fulfilDate) return { error: SAME_DATE_ERROR };
 
+  let oldDate: string;
   try {
-    await deps.repo.changeFulfilDate(order.id, newDate, overrideCap);
+    // The RPC reads the old date under its lock, so it is the true "from" date even if another move raced.
+    oldDate = await deps.repo.changeFulfilDate(order.id, newDate, overrideCap);
   } catch (err) {
     const message = err instanceof Error ? err.message.trim() : String(err).trim();
     const mapped = DATE_RPC_ERRORS[message];
@@ -210,7 +209,7 @@ export async function changeDate(input: ChangeDateInput, deps: OrderActionDeps):
       orderId: order.id,
       template: "date_changed",
       to: order.email,
-      data: { ...customerBase(order), oldDate: order.fulfilDate, newDate },
+      data: { ...customerBase(order), oldDate, newDate },
     });
     return !sent.ok;
   });
