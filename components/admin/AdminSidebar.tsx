@@ -83,9 +83,14 @@ export function AdminSidebar({
                         <Link href={item.href} aria-current={active ? "page" : undefined}>
                           <item.icon />
                           <span>{item.label}</span>
+                          {badge > 0 ? (
+                            <span className="sr-only">
+                              , {badge} {badge === 1 ? "proof" : "proofs"} to check
+                            </span>
+                          ) : null}
                         </Link>
                       </SidebarMenuButton>
-                      {badge > 0 ? <SidebarMenuBadge>{badge}</SidebarMenuBadge> : null}
+                      {badge > 0 ? <SidebarMenuBadge aria-hidden="true">{badge}</SidebarMenuBadge> : null}
                     </SidebarMenuItem>
                   );
                 })}

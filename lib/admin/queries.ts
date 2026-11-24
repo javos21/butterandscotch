@@ -177,6 +177,8 @@ export type AdminOrderDetail = {
     status: "submitted" | "confirmed" | "rejected";
     amountCents: number;
     reference: string | null;
+    /** Storage path of the receipt file, echoed back to the review action. */
+    receiptPath: string | null;
     /** Short-lived signed URL for the receipt file, or null if no file was uploaded. */
     receiptUrl: string | null;
     rejectReason: string | null;
@@ -235,6 +237,7 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
           status: latest.status as "submitted" | "confirmed" | "rejected",
           amountCents: latest.amount_cents,
           reference: latest.reference,
+          receiptPath: latest.receipt_path,
           receiptUrl: await signedReceiptUrl(latest.receipt_path),
           rejectReason: latest.reject_reason,
           createdAt: latest.created_at,
@@ -274,6 +277,7 @@ export type PaymentQueueRow = {
   totalCents: number;
   amountCents: number | null;
   reference: string | null;
+  receiptPath: string | null;
   receiptUrl: string | null;
   /** When the proof was submitted, or when the order entered proof_submitted for a stuck proof. */
   waitingSince: string;
@@ -319,6 +323,7 @@ export async function listPaymentQueue(): Promise<PaymentQueueRow[]> {
         totalCents: order.total_cents,
         amountCents: row.amount_cents,
         reference: row.reference,
+        receiptPath: row.receipt_path,
         receiptUrl: await signedReceiptUrl(row.receipt_path),
         waitingSince: row.created_at,
         stuck: false,
@@ -338,6 +343,7 @@ export async function listPaymentQueue(): Promise<PaymentQueueRow[]> {
       totalCents: order.total_cents,
       amountCents: null,
       reference: null,
+      receiptPath: null,
       receiptUrl: null,
       waitingSince: order.updated_at,
       stuck: true,

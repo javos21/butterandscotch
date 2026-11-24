@@ -31,12 +31,20 @@ export function AdminTabBar({ proofsToCheck }: { proofsToCheck: number }) {
                 <span className="relative">
                   <item.icon className="size-5" aria-hidden="true" />
                   {badge > 0 ? (
-                    <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none text-primary-foreground tabular-nums">
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none text-primary-foreground tabular-nums"
+                    >
                       {badge}
                     </span>
                   ) : null}
                 </span>
                 <span>{item.label}</span>
+                {badge > 0 ? (
+                  <span className="sr-only">
+                    , {badge} {badge === 1 ? "proof" : "proofs"} to check
+                  </span>
+                ) : null}
               </Link>
             </li>
           );
