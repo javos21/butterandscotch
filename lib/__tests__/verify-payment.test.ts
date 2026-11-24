@@ -32,6 +32,8 @@ type State = {
   order: ReviewOrder;
   windowStartedAt: string | null;
   reminderSentAt: string | null;
+  /** moveOrder applies the change, then throws: simulates a connection drop after the commit. */
+  throwAfterMove?: boolean;
   events: { kind: string; detail: Record<string, unknown> }[];
   /** Runs inside moveOrder, before its status check: simulates a concurrent staff action. */
   raceBeforeMove: (() => void) | null;
@@ -109,6 +111,7 @@ function fakeRepo(state: State): PaymentReviewRepo {
         state.windowStartedAt = windowStart;
         state.reminderSentAt = null;
       }
+      if (state.throwAfterMove) throw new Error("connection dropped after commit");
       return true;
     },
     async addEvent(_orderId, kind, detail) {
@@ -275,6 +278,34 @@ describe("verifyPayment", () => {
     expect(state.payment.status).toBe("submitted");
     expect(state.reviewedBy).toBeNull();
     expect(state.order.status).toBe("proof_submitted");
+    expect(mail.sent).toHaveLength(0);
+  });
+
+  test("order write committed then threw → keeps the decision, no revert", async () => {
+    const { state, mail, deps, shown } = setup({ throwAfterMove: true });
+
+    const result = await verifyPayment({ paymentId: PAYMENT_ID, decision: "confirm", shown }, deps);
+
+    expect(result).toEqual({ ok: true, emailFailed: false });
+    expect(state.order.status).toBe("confirmed");
+    expect(state.payment.status).toBe("confirmed");
+    expect(state.events.map((e) => e.kind)).toContain("payment_confirmed");
+    expect(mail.sent).toHaveLength(1);
+  });
+
+  test("order write threw and the order moved elsewhere → payment left alone", async () => {
+    const { state, mail, deps, shown } = setup({
+      raceBeforeMove: () => {
+        state.order.status = "cancelled";
+        throw new Error("connection reset");
+      },
+    });
+
+    const result = await verifyPayment({ paymentId: PAYMENT_ID, decision: "confirm", shown }, deps);
+
+    expect(result).toEqual({ error: REFRESH_ERROR });
+    expect(state.order.status).toBe("cancelled");
+    expect(state.payment.status).toBe("confirmed");
     expect(mail.sent).toHaveLength(0);
   });
 

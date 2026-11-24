@@ -26,13 +26,46 @@ function cleanSearch(q: string | undefined): string {
   return (q ?? "").replace(/[,()]/g, "").trim();
 }
 
+/**
+ * Signed URL for one receipt file. Null when there is no file or it cannot be signed, so a bad file
+ * shows as "No file" instead of breaking the page.
+ */
 async function signedReceiptUrl(path: string | null): Promise<string | null> {
   if (!path) return null;
-  const { data, error } = await createAdminSupabase()
-    .storage.from("receipts")
-    .createSignedUrl(path, RECEIPT_URL_SECONDS);
-  if (error) throw new Error(error.message);
-  return data.signedUrl;
+  try {
+    const { data, error } = await createAdminSupabase()
+      .storage.from("receipts")
+      .createSignedUrl(path, RECEIPT_URL_SECONDS);
+    if (error || !data) {
+      console.error("[queries] receipt URL failed", path, error?.message);
+      return null;
+    }
+    return data.signedUrl;
+  } catch (err) {
+    console.error("[queries] receipt URL threw", path, err);
+    return null;
+  }
+}
+
+/** Signed URLs for many receipt files in one request. A path that cannot be signed is left out of the map. */
+async function signedReceiptUrls(paths: string[]): Promise<Map<string, string>> {
+  const urls = new Map<string, string>();
+  if (paths.length === 0) return urls;
+  try {
+    const { data, error } = await createAdminSupabase()
+      .storage.from("receipts")
+      .createSignedUrls(paths, RECEIPT_URL_SECONDS);
+    if (error || !data) {
+      console.error("[queries] receipt URLs failed", error?.message);
+      return urls;
+    }
+    for (const item of data) {
+      if (item.path && item.signedUrl && !item.error) urls.set(item.path, item.signedUrl);
+    }
+  } catch (err) {
+    console.error("[queries] receipt URLs threw", err);
+  }
+  return urls;
 }
 
 // Today board ---------------------------------------------------------------
@@ -90,6 +123,8 @@ export type OrderListFilter = {
   status?: OrderStatus | "open";
   /** Matches order number, customer name or phone. */
   q?: string;
+  /** Only orders with this fulfil date, "YYYY-MM-DD". */
+  date?: string;
   /** 1-based. */
   page?: number;
 };
@@ -123,12 +158,23 @@ export async function listOrders(
     query = query.eq("status", filter.status);
   }
 
+  if (filter.date) query = query.eq("fulfil_date", filter.date);
+
   const term = cleanSearch(filter.q);
   if (term) {
     const pattern = `%${escapeLike(term)}%`;
-    query = query.or(
-      `order_number.ilike.${pattern},customer_name.ilike.${pattern},phone.ilike.${pattern}`,
-    );
+    const clauses = [
+      `order_number.ilike.${pattern}`,
+      `customer_name.ilike.${pattern}`,
+      `phone.ilike.${pattern}`,
+    ];
+    // Phones are stored as "+1-868-XXX-XXXX". With 7 or more digits typed, match the last seven
+    // in that shape, so "8681234567" and "1234567" both find the customer.
+    const digits = term.replace(/D/g, "");
+    if (digits.length >= 7) {
+      clauses.push(`phone.ilike.%${digits.slice(-7, -4)}-${digits.slice(-4)}%`);
+    }
+    query = query.or(clauses.join(","));
   }
 
   const { data, error, count } = await query
@@ -295,9 +341,11 @@ export async function listPaymentQueue(): Promise<PaymentQueueRow[]> {
     db
       .from("payments")
       .select(
-        "id, order_id, amount_cents, reference, receipt_path, created_at, orders(id, order_number, customer_name, fulfil_date, fulfilment, total_cents)",
+        "id, order_id, amount_cents, reference, receipt_path, created_at, orders!inner(id, order_number, customer_name, fulfil_date, fulfilment, total_cents)",
       )
       .eq("status", "submitted")
+      // A proof on an order that is no longer waiting for review (cancelled, say) cannot be acted on.
+      .eq("orders.status", "proof_submitted")
       .order("created_at", { ascending: true }),
     db
       .from("orders")
@@ -308,28 +356,29 @@ export async function listPaymentQueue(): Promise<PaymentQueueRow[]> {
   if (proofOrders.error) throw new Error(proofOrders.error.message);
 
   const withProof = new Set(payments.data.map((p) => p.order_id));
-
-  const submitted = await Promise.all(
-    payments.data.map(async (row): Promise<PaymentQueueRow | null> => {
-      const order = row.orders;
-      if (!order) return null;
-      return {
-        paymentId: row.id,
-        orderId: order.id,
-        orderNumber: order.order_number,
-        customerName: order.customer_name,
-        fulfilDate: order.fulfil_date,
-        fulfilment: order.fulfilment as "pickup" | "delivery",
-        totalCents: order.total_cents,
-        amountCents: row.amount_cents,
-        reference: row.reference,
-        receiptPath: row.receipt_path,
-        receiptUrl: await signedReceiptUrl(row.receipt_path),
-        waitingSince: row.created_at,
-        stuck: false,
-      };
-    }),
+  const receiptUrls = await signedReceiptUrls(
+    payments.data.flatMap((p) => (p.receipt_path ? [p.receipt_path] : [])),
   );
+
+  const submitted = payments.data.map((row): PaymentQueueRow | null => {
+    const order = row.orders;
+    if (!order) return null;
+    return {
+      paymentId: row.id,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      customerName: order.customer_name,
+      fulfilDate: order.fulfil_date,
+      fulfilment: order.fulfilment as "pickup" | "delivery",
+      totalCents: order.total_cents,
+      amountCents: row.amount_cents,
+      reference: row.reference,
+      receiptPath: row.receipt_path,
+      receiptUrl: row.receipt_path ? (receiptUrls.get(row.receipt_path) ?? null) : null,
+      waitingSince: row.created_at,
+      stuck: false,
+    };
+  });
 
   const stuck: PaymentQueueRow[] = proofOrders.data
     .filter((order) => !withProof.has(order.id))

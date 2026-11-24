@@ -22,7 +22,7 @@ export default async function AdminPaymentsPage() {
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
-            <li key={row.orderId}>
+            <li key={row.paymentId ?? row.orderId}>
               <PaymentCard row={row} />
             </li>
           ))}

@@ -96,6 +96,16 @@ async function missReason(repo: PaymentReviewRepo, paymentId: string): Promise<s
   return PROOF_CHANGED;
 }
 
+/** The order's current status, or null when it cannot be read. Never throws. */
+async function readStatus(repo: PaymentReviewRepo, orderId: string): Promise<OrderStatus | null> {
+  try {
+    return (await repo.findOrder(orderId))?.status ?? null;
+  } catch (err) {
+    console.error("[verify-payment] could not re-read the order", orderId, err);
+    return null;
+  }
+}
+
 /** Puts the payment back to submitted after the order write missed. Never throws. */
 async function revertPayment(repo: PaymentReviewRepo, payment: PaymentRecord, from: PaymentStatus): Promise<void> {
   try {
@@ -164,7 +174,16 @@ export async function verifyPayment(
     moved = await repo.moveOrder(order.id, order.status, next, confirmed ? null : reviewedAt);
   } catch (err) {
     console.error("[verify-payment] order write threw", order.id, err);
-    moved = false;
+    // The write may have committed before it threw. Read the order back before deciding what to undo.
+    const current = await readStatus(repo, order.id);
+    if (current === next) {
+      moved = true;
+    } else if (current === order.status) {
+      moved = false;
+    } else {
+      // Changed by someone else, or unreadable: leave the payment alone and ask staff to refresh.
+      return { error: REFRESH_ERROR };
+    }
   }
   if (!moved) {
     await revertPayment(repo, payment, outcome);

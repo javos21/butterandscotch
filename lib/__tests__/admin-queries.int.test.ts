@@ -22,6 +22,8 @@ describe.skipIf(!url || !serviceKey)("admin read models (local Supabase)", () =>
   const orderIds: string[] = [];
   const storagePaths: string[] = [];
   let cancelledId: string;
+  let cancelledProofOrderId: string;
+  let phoneId: string;
   let stuckId: string;
   let reviewId: string;
   let receiptId: string;
@@ -66,6 +68,20 @@ describe.skipIf(!url || !serviceKey)("admin read models (local Supabase)", () =>
       await insertOrder(`bulk-${i}`, BULK_NAME);
     }
     cancelledId = await insertOrder("cancelled", CANCELLED_NAME, { status: "cancelled" });
+
+    // A proof that was waiting when the order was cancelled. It must not be in the queue.
+    const closedProofId = await insertOrder("closed-proof", `${stamp}-closed`, { status: "cancelled" });
+    cancelledProofOrderId = closedProofId;
+    const closedPayment = await db.from("payments").insert({
+      order_id: closedProofId,
+      amount_cents: 14000,
+      reference: "BANK-REF-CLOSED",
+      status: "submitted",
+    });
+    if (closedPayment.error) throw closedPayment.error;
+
+    // A customer's phone in the stored +1-868 format, to test digit search.
+    phoneId = await insertOrder("phone", `${stamp}-phone`, { phone: "+1-868-734-2290" });
 
     // Proof submitted but the upload crashed before the payment row was written.
     stuckId = await insertOrder("stuck", `${stamp}-misc`, { status: "proof_submitted" });
@@ -168,6 +184,31 @@ describe.skipIf(!url || !serviceKey)("admin read models (local Supabase)", () =>
     const reviewed = queue.find((row) => row.orderId === reviewId);
     expect(reviewed).toBeDefined();
     expect(reviewed?.stuck).toBe(false);
+  });
+
+  test("queue leaves out a submitted payment whose order was cancelled", async () => {
+    const queue = await listPaymentQueue();
+    expect(queue.some((row) => row.orderId === cancelledProofOrderId)).toBe(false);
+    expect(queue.some((row) => row.orderId === reviewId)).toBe(true);
+  });
+
+  test("date filters to one fulfil date", async () => {
+    // insertOrder defaults fulfil_date to 2027-08-01.
+    const onDay = await listOrders({ q: BULK_NAME, date: "2027-08-01" });
+    expect(onDay.total).toBe(26);
+    expect(onDay.rows.every((row) => row.fulfilDate === "2027-08-01")).toBe(true);
+
+    const otherDay = await listOrders({ q: BULK_NAME, date: "2027-08-02" });
+    expect(otherDay.total).toBe(0);
+  });
+
+  test("phone search matches the last seven digits of a stored +1-868 number", async () => {
+    for (const q of ["7342290", "8687342290", "868-734-2290"]) {
+      const found = await listOrders({ q });
+      expect(found.rows.some((row) => row.id === phoneId), q).toBe(true);
+    }
+    const miss = await listOrders({ q: "7342291" });
+    expect(miss.rows.some((row) => row.id === phoneId)).toBe(false);
   });
 
   test("getAdminOrder returns a signed receipt URL, events and emails", async () => {

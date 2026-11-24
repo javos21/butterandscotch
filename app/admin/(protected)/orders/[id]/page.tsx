@@ -14,6 +14,7 @@ import { formatFulfilDate } from "@/lib/format-date";
 import { formatMoney, lineTotal } from "@/lib/money";
 import { waLink } from "@/lib/phone";
 import type { OrderStatus } from "@/lib/order-status";
+import { isUuid } from "@/lib/uuid";
 
 const EVENT_LABEL: Record<string, string> = {
   fee_set: "Delivery fee set",
@@ -58,6 +59,7 @@ function whenLabel(iso: string): string {
 export default async function AdminOrderPage({ params }: { params: Promise<{ id: string }> }) {
   await requireStaff();
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const order = await getAdminOrder(id);
   if (!order) notFound();
 

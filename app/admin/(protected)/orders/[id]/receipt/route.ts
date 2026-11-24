@@ -1,6 +1,7 @@
-import { loadReceiptData } from "@/lib/admin/payments-repo";
 import { requireStaff } from "@/lib/auth/require-staff";
+import { loadReceiptData } from "@/lib/receipt/load-receipt";
 import { receiptFilename, renderReceiptPdf } from "@/lib/receipt/render-receipt";
+import { isUuid } from "@/lib/uuid";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   await requireStaff();
   const { id } = await params;
+  if (!isUuid(id)) return new Response("Not found", { status: 404 });
   const data = await loadReceiptData({ orderId: id });
   if (!data) return new Response("Not found", { status: 404 });
 

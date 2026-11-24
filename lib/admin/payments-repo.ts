@@ -1,6 +1,5 @@
 import "server-only";
 import { getPublicSettings } from "@/lib/data/settings";
-import { trinidadToday } from "@/lib/dates";
 import type {
   PaymentExpect,
   PaymentRecord,
@@ -11,11 +10,13 @@ import type {
 } from "@/lib/admin/verify-payment";
 import type { Json } from "@/lib/database.types";
 import type { OrderStatus } from "@/lib/order-status";
-import { buildReceiptData, hasReceipt, type ReceiptData } from "@/lib/receipt/receipt-data";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
-/** Loads one order with its items, on the service role. Callers must run requireStaff() first. */
-async function fetchOrder(column: "id" | "access_token", value: string): Promise<ReviewOrder | null> {
+/**
+ * Loads one order with its items, on the service role. Does no authorisation itself: callers must
+ * have checked the lookup (requireStaff(), or a customer's access token). Shared with lib/receipt.
+ */
+export async function fetchOrder(column: "id" | "access_token", value: string): Promise<ReviewOrder | null> {
   const { data, error } = await createAdminSupabase()
     .from("orders")
     .select("*, order_items(*)")
@@ -131,28 +132,3 @@ export function paymentReviewRepo(): PaymentReviewRepo {
   };
 }
 
-/**
- * The receipt for a confirmed, ready or completed order, found by its access token (customer) or
- * its id (staff). Null when the order is missing or has no confirmed payment yet.
- */
-export async function loadReceiptData(lookup: { token: string } | { orderId: string }): Promise<ReceiptData | null> {
-  const order =
-    "token" in lookup
-      ? await fetchOrder("access_token", lookup.token)
-      : await fetchOrder("id", lookup.orderId);
-  if (!order || !hasReceipt(order.status)) return null;
-
-  const { data, error } = await createAdminSupabase()
-    .from("payments")
-    .select("reviewed_at")
-    .eq("order_id", order.id)
-    .eq("status", "confirmed")
-    .order("reviewed_at", { ascending: false })
-    .limit(1);
-  if (error) throw new Error(error.message);
-
-  const reviewedAt = data[0]?.reviewed_at ?? null;
-  const paidOn = trinidadToday(reviewedAt ? new Date(reviewedAt) : new Date());
-  const settings = await getPublicSettings();
-  return buildReceiptData(order, paidOn, settings.whatsapp_number);
-}

@@ -1,4 +1,4 @@
-import { loadReceiptData } from "@/lib/admin/payments-repo";
+import { loadReceiptData } from "@/lib/receipt/load-receipt";
 import { receiptFilename, renderReceiptPdf } from "@/lib/receipt/render-receipt";
 
 export const dynamic = "force-dynamic";

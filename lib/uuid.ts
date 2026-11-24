@@ -1,3 +1,10 @@
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True for a canonical 8-4-4-4-12 UUID. Rejects ids Postgres would refuse as a uuid, before they reach a query. */
+export function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
 /**
  * A random RFC4122 v4 UUID. `crypto.randomUUID` only exists in secure contexts (https or
  * localhost), so when it is missing (for example a phone on a LAN IP over http) the UUID is
