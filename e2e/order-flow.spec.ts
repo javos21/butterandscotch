@@ -13,7 +13,7 @@ test("pickup order to proof", async ({ page }) => {
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
   await addToCart(page, "Red Velvet Cupcakes", { quantity: 2 });
 
-  await page.getByRole("link", { name: /Cart \(3\)/ }).click();
+  await page.getByRole("link", { name: /Basket 3/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   await fillContact(page);
@@ -34,7 +34,7 @@ test("pickup order to proof", async ({ page }) => {
 test("lead time days cannot be picked", async ({ page }) => {
   await page.goto("/");
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Cart \(1\)/ }).click();
+  await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   const todayCell = page.locator(`[data-date="${trinidadToday()}"]`);
@@ -59,7 +59,7 @@ test("lead time days cannot be picked", async ({ page }) => {
 test("other area waits for a quote", async ({ page }) => {
   await page.goto("/");
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Cart \(1\)/ }).click();
+  await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   await fillContact(page);
@@ -79,11 +79,16 @@ test("item limit across flavours", async ({ page }) => {
   await page.goto("/");
   await addToCart(page, "Cookie Jar", { flavour: "Coconut Butterscotch", quantity: 2 });
 
-  const jar = menuCard(page, "Cookie Jar");
-  await jar.getByLabel("Flavour").selectOption("Half & Half");
-  await expect(jar.getByRole("button", { name: "Increase quantity" })).toBeDisabled();
-  await expect(jar.getByRole("button", { name: "Add to cart" })).toBeDisabled();
-  await expect(jar.getByText("0", { exact: true })).toBeVisible();
+  // Still on the jar page: a second flavour cannot be added past the per-order limit of 2.
+  await page.locator("label").filter({ hasText: "Half & Half" }).click();
+    await expect(page.getByRole("radio", { name: "Half & Half", exact: true })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Increase quantity" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Most per order in basket" })).toBeDisabled();
+  await expect(page.getByRole("group", { name: "Quantity of Cookie Jar" }).getByText("0", { exact: true })).toBeVisible();
+
+  // The menu card says the same.
+  await page.goto("/");
+  await expect(menuCard(page, "Cookie Jar").getByText("Most per order (2) in basket")).toBeVisible();
 });
 
 test.describe("no horizontal scroll at 375px", () => {
@@ -99,7 +104,7 @@ test.describe("no horizontal scroll at 375px", () => {
     await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
     await expectFitsWidth(page, "menu");
 
-    await page.getByRole("link", { name: /Cart \(1\)/ }).click();
+    await page.getByRole("link", { name: /Basket 1/ }).click();
     await expect(page).toHaveURL(/\/checkout$/);
     await expect(page.getByRole("heading", { name: "Your details" })).toBeVisible();
     await expectFitsWidth(page, "checkout");

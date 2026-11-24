@@ -28,7 +28,7 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
   const quoteOnly = isDelivery && order.deliveryFeeCents === null;
 
   return (
-    <main className="mx-auto max-w-xl space-y-8 p-4">
+    <main className="mx-auto max-w-xl space-y-5 px-4 pb-6">
       <OrderStatusBanner
         status={order.status}
         statusLabel={order.statusLabel}
@@ -41,41 +41,41 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
         </Button>
       )}
 
-      <section className="space-y-3">
-        <h1 className="text-2xl font-semibold">Order {order.orderNumber}</h1>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-muted-foreground">Date</dt>
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h1 className="font-display text-[clamp(2rem,7vw,2.75rem)] leading-tight text-oxblood">Order {order.orderNumber}</h1>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-base text-olive-ink">
+          <dt className="text-olive">Date</dt>
           <dd>{formatFulfilDate(order.fulfilDate)}</dd>
-          <dt className="text-muted-foreground">Fulfilment</dt>
+          <dt className="text-olive">Fulfilment</dt>
           <dd>{isDelivery ? "Delivery" : "Pickup"}</dd>
           {isDelivery && (
             <>
-              <dt className="text-muted-foreground">Area</dt>
+              <dt className="text-olive">Area</dt>
               <dd>{order.areaName}</dd>
-              <dt className="text-muted-foreground">Address</dt>
+              <dt className="text-olive">Address</dt>
               <dd className="whitespace-pre-line">{order.address}</dd>
             </>
           )}
         </dl>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Items</h2>
-        <ul className="divide-y rounded-lg border">
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Items</h2>
+        <ul className="divide-y divide-olive-line">
           {order.items.map((item, index) => (
-            <li key={`${item.name}-${item.flavour ?? ""}-${index}`} className="flex justify-between gap-3 p-3 text-sm">
+            <li key={`${item.name}-${item.flavour ?? ""}-${index}`} className="flex justify-between gap-3 py-3 text-base text-olive-ink">
               <div className="min-w-0">
                 <p>
                   {item.quantity} × {item.name}
                 </p>
-                {item.flavour && <p className="text-muted-foreground">{item.flavour}</p>}
+                {item.flavour && <p className="text-olive">{item.flavour}</p>}
               </div>
               <p>{formatMoney(item.lineTotalCents)}</p>
             </li>
           ))}
         </ul>
 
-        <dl className="space-y-2 text-sm">
+        <dl className="space-y-2 rounded-2xl bg-cream-warm p-4 text-base text-olive-ink">
           <div className="flex justify-between">
             <dt>Subtotal</dt>
             <dd>{formatMoney(order.subtotalCents)}</dd>
@@ -98,7 +98,7 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
               <dd>{formatMoney(order.adjustmentsCents)}</dd>
             </div>
           )}
-          <div className="flex justify-between border-t pt-2 text-base font-semibold">
+          <div className="flex justify-between border-t border-olive-line pt-2 text-xl font-extrabold">
             <dt>Total</dt>
             <dd>
               {quoteOnly
@@ -112,23 +112,23 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
       {order.bank && <BankDetails bank={order.bank} orderNumber={order.orderNumber} />}
 
       {order.canUploadProof && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Upload proof of payment</h2>
+        <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+          <h2 className="font-display text-2xl leading-tight text-crimson-deep">Upload proof of payment</h2>
           <ProofUploadForm token={token} />
         </section>
       )}
 
       {order.pickupInfo && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Pickup</h2>
-          <p className="whitespace-pre-line text-sm">{order.pickupInfo}</p>
+        <section className="space-y-2 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+          <h2 className="font-display text-2xl leading-tight text-crimson-deep">Pickup</h2>
+          <p className="whitespace-pre-line text-base text-olive-ink">{order.pickupInfo}</p>
         </section>
       )}
 
-      <section className="text-sm">
+      <section className="text-center text-base text-olive-ink">
         <p>Questions about this order?</p>
         {whatsappHref ? (
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="font-bold text-crimson-deep underline underline-offset-4">
             Order {order.orderNumber}
           </a>
         ) : (

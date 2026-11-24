@@ -7,8 +7,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
-  --font-display: Georgia, "Times New Roman", serif;
   --font-heading: var(--font-display);
   --color-cream: var(--cream);
   --color-ink: var(--ink);
@@ -92,88 +90,82 @@
   }
 }
 
-/* Breakpoint where the handoff's desktop layout starts (it designs mobile at ≤860px). */
+
+/* Storefront breakpoints and motion (DESIGN.md). */
 @theme {
-  --breakpoint-desk: 861px;
-  --ease-house: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --ease-fade: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
-  --color-paper: var(--cream);
-  --color-ink-2: var(--ink-2);
-  --color-ink-3: var(--ink-3);
-  --color-ink-4: var(--ink-4);
-  --color-taupe: var(--taupe);
-  --color-numeral: var(--numeral);
-  --color-sov-bg: var(--sov-bg);
-  --color-sov-fg: var(--sov-fg);
-  --color-sov-card: var(--sov-card);
-  --color-sov-card-empty: var(--sov-card-empty);
-  --color-rev-bg: var(--rev-bg);
-  --color-rev-fg: var(--rev-fg);
-  --color-rev-card: var(--rev-card);
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-young-serif), Georgia, serif;
+  --color-cream: var(--cream);
+  --color-card-cream: var(--card-cream);
+  --color-cream-warm: var(--cream-warm);
+  --color-sage-wash: var(--sage-wash);
+  --color-crimson: var(--crimson);
+  --color-crimson-deep: var(--crimson-deep);
+  --color-oxblood: var(--oxblood);
+  --color-olive-ink: var(--olive-ink);
+  --color-olive: var(--olive);
+  --color-olive-line: var(--olive-line);
+  --color-holly: var(--holly);
+  --color-caramel: var(--caramel);
+  --color-cocoa: var(--cocoa);
 }
 
 /*
- * Brand tokens from the home page handoff (docs/handoff/home-v3/HANDOFF.md §3).
- * The storefront is light-only by design. `cream` is the handoff's paper.
- * Typography stays soft: no weight above 400 anywhere on the storefront.
+ * Butter & Scotch storefront tokens. DESIGN.md is the source of truth; light only.
+ * The admin overrides these under .admin-theme below.
  */
 :root {
-  --cream: #F7F2EA;
-  --ink: #1E1712;
-  --ink-2: #4D4136;
-  --ink-3: #6E5E4B;
-  --ink-4: #5E5145;
-  --taupe: #8C7A63;
-  --numeral: #9C8466;
-  --brand: #4A1F38;
-  --rule: rgb(30 23 18 / 0.2);
-  --brand-foreground: var(--cream);
-
-  --sov-bg: #120D09;
-  --sov-fg: #F6EEE0;
-  --sov-card: #2A1E14;
-  --sov-card-empty: #1F1710;
-  --rev-bg: #FCEBEC;
-  --rev-fg: #4A1F38;
-  --rev-card: #F6D2DC;
+  --cream: #FEF8F1;
+  --card-cream: #FFFCF7;
+  --cream-warm: #FFF0DE;
+  --sage-wash: #E3E1C6;
+  --crimson: #820914;
+  --crimson-deep: #6A0610;
+  --oxblood: #560008;
+  --olive-ink: #3E3A0E;
+  --olive: #6B6D38;
+  --olive-line: #CBC7AE;
+  --holly: #84873D;
+  --caramel: #E0A028;
+  --cocoa: #744324;
 
   color-scheme: light;
-
   --background: var(--cream);
-  --foreground: var(--ink);
-  --card: var(--cream);
-  --card-foreground: var(--ink);
-  --popover: var(--cream);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
+  --foreground: var(--olive-ink);
+  --card: var(--card-cream);
+  --card-foreground: var(--olive-ink);
+  --popover: var(--card-cream);
+  --popover-foreground: var(--olive-ink);
+  --primary: var(--crimson);
   --primary-foreground: var(--cream);
-  --secondary: var(--cream);
-  --secondary-foreground: var(--ink);
-  --muted: color-mix(in oklab, var(--ink) 5%, var(--cream));
-  --muted-foreground: color-mix(in oklab, var(--ink) 62%, var(--cream));
-  --accent: color-mix(in oklab, var(--ink) 5%, var(--cream));
-  --accent-foreground: var(--ink);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: var(--rule);
-  --input: var(--rule);
-  --ring: var(--ink);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --secondary: var(--card-cream);
+  --secondary-foreground: var(--olive-ink);
+  --muted: var(--cream-warm);
+  --muted-foreground: var(--olive);
+  --accent: var(--cream-warm);
+  --accent-foreground: var(--olive-ink);
+  --destructive: var(--crimson);
+  --border: var(--olive-line);
+  --input: var(--olive);
+  --ring: var(--holly);
+  --chart-1: var(--crimson);
+  --chart-2: var(--olive);
+  --chart-3: var(--holly);
+  --chart-4: var(--caramel);
+  --chart-5: var(--cocoa);
+  --radius: 1rem;
   --sidebar: var(--cream);
-  --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink);
+  --sidebar-foreground: var(--olive-ink);
+  --sidebar-primary: var(--crimson);
   --sidebar-primary-foreground: var(--cream);
-  --sidebar-accent: color-mix(in oklab, var(--ink) 5%, var(--cream));
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: var(--rule);
-  --sidebar-ring: var(--ink);
+  --sidebar-accent: var(--cream-warm);
+  --sidebar-accent-foreground: var(--olive-ink);
+  --sidebar-border: var(--olive-line);
+  --sidebar-ring: var(--holly);
 }
 
 @layer base {
@@ -181,95 +173,38 @@
     @apply border-border outline-ring/50;
   }
   body {
-    background-color: var(--cream);
-    font-weight: 400;
+    background-color: var(--background);
+    font-weight: 500;
     @apply text-foreground;
   }
   html {
     @apply font-sans;
   }
   ::selection {
-    background-color: var(--ink);
+    background-color: var(--crimson);
     color: var(--cream);
   }
   :focus-visible {
-    outline: 1px solid currentColor;
-    outline-offset: 6px;
+    outline: 3px solid var(--holly);
+    outline-offset: 2px;
+  }
+  button,
+  a {
+    touch-action: manipulation;
   }
 }
 
-/* Editorial labels only: compact Jost caps with enough size and spacing to remain legible. */
-@utility eyebrow {
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1.5;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-}
-
-/* A link whose 1px underline draws left to right on hover and focus. */
-@utility ulink {
-  position: relative;
-  display: inline-block;
-  padding-block: 12px;
-  &::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 100%;
-    bottom: 6px;
-    height: 1px;
-    background: currentColor;
-    transition: right 0.45s var(--ease-house);
-  }
-  &:hover::after,
-  &:focus-visible::after {
-    right: 0;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    &::after {
-      transition: none;
-    }
-  }
-}
-
-/* The house button: square, 1px line, label type, label left and arrow right. */
-@utility btn-line {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  min-height: 50px;
-  padding-inline: 26px;
-  border: 1px solid currentColor;
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1.5;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  transition:
-    background-color 0.4s ease,
-    color 0.4s ease,
-    border-color 0.4s ease;
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-}
-
-/* The hero's tab progress line fills over one slide interval. */
-@keyframes hero-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 /*
- * Admin theme. Neutral zinc with an indigo accent, light only, Inter. See docs/design.md.
+ * Admin theme. Neutral zinc with the brand red accent, light only, system sans.
  * The tokens are set on the wrapper and again on :root while the wrapper is on the page,
  * so portaled UI (dialogs, menus, selects, toasts) rendered under <body> picks them up too.
  */

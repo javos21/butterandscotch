@@ -1,5 +1,4 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import type { OrderViewPayment } from "@/lib/orders/get-order";
 import type { OrderStatus } from "@/lib/order-status";
 
@@ -31,12 +30,18 @@ export function OrderStatusBanner({
 
   return (
     <section className="space-y-3">
-      <Badge className="px-3 py-1 text-base">{statusLabel}</Badge>
+      <p className="w-fit rounded-full bg-cream-warm px-4 py-1.5 text-base font-bold text-crimson-deep ring-1 ring-crimson-deep/30">{statusLabel}</p>
 
       {banner && (
-        <Alert>
-          <AlertDescription>{banner}</AlertDescription>
-        </Alert>
+        <p
+          className={
+            status === "confirmed" || status === "ready" || status === "completed"
+              ? "rounded-2xl bg-sage-wash px-5 py-3.5 text-base font-bold text-olive-ink"
+              : "rounded-2xl bg-crimson px-5 py-3.5 text-base font-bold leading-snug text-cream"
+          }
+        >
+          {banner}
+        </p>
       )}
 
       {rejected && (

@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { ShoppingBasket } from "lucide-react";
 import { useCart } from "@/components/shop/CartProvider";
-import { formatMoney } from "@/lib/money";
 
-/** Header link to the bag, showing how many items are in it and their subtotal. */
+/** Header basket: icon plus a live item count. */
 export function CartLink() {
-  const { count, subtotalCents } = useCart();
+  const { count } = useCart();
   return (
-    <Link href="/checkout" className="text-sm underline underline-offset-4">
-      Cart ({count}) {count > 0 && `· ${formatMoney(subtotalCents)}`}
+    <Link
+      href="/checkout"
+      className="flex min-h-11 min-w-11 flex-col items-center justify-center rounded-xl px-1 text-crimson-deep hover:bg-cream-warm"
+    >
+      <ShoppingBasket className="size-7" strokeWidth={1.75} aria-hidden="true" />
+      <span className="text-sm font-bold leading-tight">Basket {count}</span>
     </Link>
   );
 }

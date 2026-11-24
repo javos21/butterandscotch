@@ -32,6 +32,21 @@ export async function getMenu(): Promise<{
   };
 }
 
+/** One active item with its section name, or null when the id is unknown or the item is switched off. */
+export async function getItem(id: string): Promise<{ item: Item; sectionName: string } | null> {
+  const db = createPublicSupabase();
+  const { data: item, error } = await db.from("items").select("*").eq("id", id).eq("active", true).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!item) return null;
+  const { data: section, error: sectionError } = await db
+    .from("sections")
+    .select("name")
+    .eq("id", item.section_id)
+    .maybeSingle();
+  if (sectionError) throw new Error(sectionError.message);
+  return { item, sectionName: section?.name ?? "Menu" };
+}
+
 /** Dates in [from, to] the customer cannot pick: blocked dates and dates at the daily cap. */
 export async function getUnavailableDates(from: string, to: string): Promise<string[]> {
   const { data, error } = await createPublicSupabase().rpc("public_unavailable_dates", {

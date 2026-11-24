@@ -83,7 +83,7 @@ export function ProofUploadForm({ token }: { token: string }) {
 
   return (
     <form ref={formRef} onSubmit={onSubmit} noValidate className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-base text-olive-ink">
         Attach a screenshot or PDF of your transfer, and the reference from your bank or app if you have it.
       </p>
 
@@ -97,7 +97,7 @@ export function ProofUploadForm({ token }: { token: string }) {
           required
           className="h-auto py-2"
         />
-        <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, HEIC or PDF, max 4 MB.</p>
+        <p className="text-sm text-olive">JPG, PNG, WEBP, HEIC or PDF, max 4 MB.</p>
       </div>
 
       <div className="space-y-2">
@@ -118,7 +118,7 @@ export function ProofUploadForm({ token }: { token: string }) {
         </p>
       )}
 
-      <Button type="submit" disabled={pending} className="w-full">
+      <Button type="submit" disabled={pending} className="h-13 w-full rounded-2xl text-base font-bold">
         {pending ? "Uploading…" : "Upload proof"}
       </Button>
     </form>

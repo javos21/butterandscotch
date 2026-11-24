@@ -37,18 +37,24 @@ export async function waitForHydration(page: Page) {
   );
 }
 
-/** Adds an item to the cart with an optional flavour and quantity, then waits for the toast. */
+/**
+ * Adds an item to the basket from its own page (flavour, quantity, Add to basket), then waits for
+ * the toast. Starts from the menu, and leaves the page on the item.
+ */
 export async function addToCart(page: Page, name: string, options: { flavour?: string; quantity?: number } = {}) {
+  if (new URL(page.url()).pathname !== "/") await page.goto("/");
+  await menuCard(page, name).getByRole("link", { name, exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name, exact: true })).toBeVisible();
   await waitForHydration(page);
-  const card = menuCard(page, name);
   if (options.flavour) {
-    await card.getByLabel("Flavour").selectOption(options.flavour);
+    await page.locator("label").filter({ hasText: options.flavour }).click();
+    await expect(page.getByRole("radio", { name: options.flavour, exact: true })).toBeChecked();
   }
   for (let i = 1; i < (options.quantity ?? 1); i++) {
-    await card.getByRole("button", { name: "Increase quantity" }).click();
+    await page.getByRole("button", { name: "Increase quantity" }).click();
   }
-  await card.getByRole("button", { name: "Add to cart" }).click();
-  await expect(page.getByText(`Added ${name} to your cart`)).toBeVisible();
+  await page.getByRole("button", { name: /^Add to basket/ }).click();
+  await expect(page.getByText(new RegExp(`^Added ${name}`))).toBeVisible();
 }
 
 export async function fillContact(page: Page) {
@@ -114,7 +120,7 @@ async function readPlacedOrder(page: Page): Promise<PlacedOrder> {
 export async function placePickupOrder(page: Page, dayIndex: number): Promise<PlacedOrder> {
   await page.goto("/");
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Cart \(1\)/ }).click();
+  await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   await fillContact(page);
@@ -129,7 +135,7 @@ export async function placePickupOrder(page: Page, dayIndex: number): Promise<Pl
 export async function placeOtherAreaOrder(page: Page, dayIndex: number): Promise<PlacedOrder> {
   await page.goto("/");
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Cart \(1\)/ }).click();
+  await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   await fillContact(page);

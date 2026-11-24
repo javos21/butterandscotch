@@ -85,9 +85,9 @@ export function CheckoutForm({
 
   if (lines.length === 0 && !placed) {
     return (
-      <div className="space-y-3">
-        <p>Your cart is empty.</p>
-        <Link href="/" className="underline underline-offset-4">
+      <div className="mx-auto max-w-xl space-y-5 px-4 py-12 text-center">
+        <p className="font-display text-3xl text-crimson-deep">Your basket is empty.</p>
+        <Link href="/#menu" className="mx-auto flex min-h-12 w-fit items-center rounded-2xl bg-crimson px-6 font-bold text-cream hover:bg-crimson-deep">
           Back to the menu
         </Link>
       </div>
@@ -153,18 +153,19 @@ export function CheckoutForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-xl space-y-8 p-4">
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Your cart</h2>
-        <ul className="divide-y rounded-lg border">
+    <form onSubmit={onSubmit} className="mx-auto max-w-xl space-y-5 px-4 pb-6">
+      <h1 className="pt-2 text-center font-display text-[clamp(2.2rem,8vw,3rem)] leading-tight text-oxblood">Checkout</h1>
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Your basket</h2>
+        <ul className="divide-y divide-olive-line">
           {lines.map((line) => {
             const room = roomFor(lines, line.itemId, line.maxQty);
             return (
               <li key={line.lineId} className="flex flex-wrap items-center justify-between gap-3 p-3">
                 <div className="min-w-0">
-                  <p className="font-medium">{line.name}</p>
-                  {line.flavour && <p className="text-sm text-muted-foreground">{line.flavour}</p>}
-                  <p className="text-sm">{formatMoney(line.unitPriceCents * line.quantity)}</p>
+                  <p className="font-display text-lg leading-tight text-crimson-deep">{line.name}</p>
+                  {line.flavour && <p className="text-[0.9375rem] text-olive">{line.flavour}</p>}
+                  <p className="font-extrabold text-olive-ink">{formatMoney(line.unitPriceCents * line.quantity)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -204,8 +205,8 @@ export function CheckoutForm({
         )}
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Your details</h2>
+      <section className="space-y-5 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Your details</h2>
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
           <Input id="name" name="name" autoComplete="name" required aria-invalid={!!errors.name} value={name} onChange={(e) => setName(e.target.value)} />
@@ -223,8 +224,8 @@ export function CheckoutForm({
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Pickup or delivery</h2>
+      <section className="space-y-5 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Pickup or delivery</h2>
         <RadioGroup value={fulfilment} onValueChange={(value) => setFulfilment(value as Fulfilment)}>
           <div className="flex items-center gap-2">
             <RadioGroupItem value="pickup" id="fulfil-pickup" />
@@ -246,7 +247,7 @@ export function CheckoutForm({
                 required
                 value={areaId}
                 onChange={(e) => setAreaId(e.target.value)}
-                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                className="h-12 w-full rounded-[10px] border border-olive bg-card px-3 text-base"
               >
                 <option value="">Choose an area</option>
                 {areas.map((a) => (
@@ -270,8 +271,8 @@ export function CheckoutForm({
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Date</h2>
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Date</h2>
         <DateCalendar
           today={today}
           leadDays={leadDays}
@@ -291,8 +292,8 @@ export function CheckoutForm({
         )}
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Allergies and notes</h2>
+      <section className="space-y-5 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Allergies and notes</h2>
         <div className="space-y-2">
           <Label htmlFor="allergies">Allergies or dietary needs</Label>
           <div className="text-sm text-muted-foreground">
@@ -327,9 +328,9 @@ export function CheckoutForm({
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Order policy</h2>
-        <div className="max-h-40 overflow-y-auto whitespace-pre-line rounded-md border p-3 text-sm">
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Order policy</h2>
+        <div className="max-h-40 overflow-y-auto whitespace-pre-line rounded-[10px] border border-olive-line bg-cream p-3 text-[0.9375rem] text-olive-ink">
           {policyText}
         </div>
         <div className="flex items-start gap-2">
@@ -347,7 +348,7 @@ export function CheckoutForm({
         )}
       </section>
 
-      <section className="space-y-2 border-t pt-4 text-sm">
+      <section className="space-y-2 rounded-[22px] bg-cream-warm p-4 text-base text-olive-ink sm:p-6">
         <div className="flex justify-between">
           <span>Subtotal</span>
           <span>{formatMoney(subtotalCents)}</span>
@@ -361,7 +362,7 @@ export function CheckoutForm({
             <span>{formatMoney(feeCents)}</span>
           </div>
         )}
-        <div className="flex justify-between text-base font-semibold">
+        <div className="flex justify-between border-t border-olive-line pt-2 text-xl font-extrabold">
           <span>Total</span>
           <span>{quoteOnly ? `${formatMoney(subtotalCents)} + delivery` : formatMoney(subtotalCents + feeCents)}</span>
         </div>
@@ -373,7 +374,9 @@ export function CheckoutForm({
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" disabled={pending || lines.length === 0}>
+      <p className="rounded-2xl bg-crimson px-4 py-3 text-center text-[0.9375rem] font-bold text-cream">Your order is confirmed after payment proof is checked.</p>
+
+      <Button type="submit" className="h-14 w-full rounded-2xl text-lg font-bold" disabled={pending || lines.length === 0}>
         Place order — pay to confirm
       </Button>
     </form>

@@ -111,7 +111,7 @@ test("set a delivery fee", async ({ page }, testInfo) => {
 test("blocked date in settings", async ({ page }, testInfo) => {
   await page.goto("/");
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Cart \(1\)/ }).click();
+  await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
   const iso = await pickAvailableDate(page, dayFor(6, testInfo));
 

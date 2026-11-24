@@ -220,3 +220,8 @@ insert into staff (user_id, name) values
   ('00000000-0000-0000-0000-00000000005a', 'Owner'),
   ('00000000-0000-0000-0000-00000000005b', 'Developer')
 on conflict (user_id) do nothing;
+
+-- Owner photos (public/items/).
+update items set image_url = '/items/hummingbird-cake.webp' where name = 'Hummingbird Cake';
+update items set image_url = '/items/orange-almond-cake.webp' where name = 'Orange Almond Cake';
+update items set image_url = '/items/honey-pistachio-cake.webp' where name = 'Honey Pistachio Cake';

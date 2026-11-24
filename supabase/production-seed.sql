@@ -122,3 +122,8 @@ insert into delivery_areas (id, name, fee_cents, active, sort) values
   ('00000000-0000-0000-0000-000000000d25', 'Tobago', 9000, true, 25),
   ('00000000-0000-0000-0000-000000000d26', 'Other area (we''ll contact you)', null, true, 26)
 on conflict (id) do nothing;
+
+-- Owner photos (public/items/).
+update items set image_url = '/items/hummingbird-cake.webp' where name = 'Hummingbird Cake';
+update items set image_url = '/items/orange-almond-cake.webp' where name = 'Orange Almond Cake';
+update items set image_url = '/items/honey-pistachio-cake.webp' where name = 'Honey Pistachio Cake';

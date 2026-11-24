@@ -18,14 +18,14 @@ export function BankDetails({ bank, orderNumber }: { bank: BankDetailsValue; ord
   ];
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold">Pay by bank transfer</h2>
-      <dl className="divide-y rounded-lg border">
+    <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+      <h2 className="font-display text-2xl leading-tight text-crimson-deep">Pay by bank transfer</h2>
+      <dl className="divide-y divide-olive-line rounded-2xl border border-olive-line bg-cream">
         {rows.map((row) => (
           <BankRow key={row.label} row={row} />
         ))}
       </dl>
-      <p className="text-sm">Put your order number {orderNumber} in the transfer notes.</p>
+      <p className="text-base font-bold text-olive-ink">Put your order number {orderNumber} in the transfer notes.</p>
     </section>
   );
 }
@@ -46,8 +46,8 @@ function BankRow({ row }: { row: Row }) {
   return (
     <div className="flex items-center justify-between gap-3 p-3">
       <div className="min-w-0">
-        <dt className="text-xs text-muted-foreground">{row.label}</dt>
-        <dd className="break-all font-mono text-sm">{row.value}</dd>
+        <dt className="text-sm text-olive">{row.label}</dt>
+        <dd className="break-all text-base font-extrabold tabular-nums text-olive-ink">{row.value}</dd>
       </div>
       <Button type="button" variant="outline" size="sm" onClick={copy} aria-label={`Copy ${row.label}`}>
         {copied ? "Copied" : "Copy"}
