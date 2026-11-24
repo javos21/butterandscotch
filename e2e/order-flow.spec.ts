@@ -1,57 +1,12 @@
-import path from "node:path";
-import { expect, test, type Locator, type Page } from "@playwright/test";
-
-const PHONE = "868 555 0101";
-const RECEIPT = path.join(__dirname, "fixtures", "receipt.png");
-
-/** Today's date in Trinidad as "YYYY-MM-DD", matching the server's calendar. */
-function trinidadToday(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Port_of_Spain",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
-/** The menu card for one item, found by its heading. */
-function menuCard(page: Page, name: string): Locator {
-  return page.getByRole("article").filter({ has: page.getByRole("heading", { name, exact: true }) });
-}
-
-/** Waits until React has hydrated the page, so clicks and selects are not reset by the first render. */
-async function waitForHydration(page: Page) {
-  await page.waitForFunction(() =>
-    Array.from(document.querySelectorAll("button")).some((button) =>
-      Object.keys(button).some((key) => key.startsWith("__reactProps")),
-    ),
-  );
-}
-
-/** Adds an item to the cart with an optional flavour and quantity, then waits for the toast. */
-async function addToCart(page: Page, name: string, options: { flavour?: string; quantity?: number } = {}) {
-  await waitForHydration(page);
-  const card = menuCard(page, name);
-  if (options.flavour) {
-    await card.getByLabel("Flavour").selectOption(options.flavour);
-  }
-  for (let i = 1; i < (options.quantity ?? 1); i++) {
-    await card.getByRole("button", { name: "Increase quantity" }).click();
-  }
-  await card.getByRole("button", { name: "Add to cart" }).click();
-  await expect(page.getByText(`Added ${name} to your cart`)).toBeVisible();
-}
-
-async function fillContact(page: Page) {
-  await page.getByLabel("Name", { exact: true }).fill("Test Customer");
-  await page.getByLabel("Email", { exact: true }).fill("customer@example.test");
-  await page.getByLabel("WhatsApp number").fill(PHONE);
-}
-
-async function acceptPolicyAndAllergies(page: Page) {
-  await page.getByLabel("Allergies or dietary needs", { exact: true }).fill("None");
-  await page.getByRole("checkbox", { name: "I have read and accept the order policy" }).check();
-}
+import { expect, test, type Page } from "@playwright/test";
+import {
+  RECEIPT,
+  acceptPolicyAndAllergies,
+  addToCart,
+  fillContact,
+  menuCard,
+  trinidadToday,
+} from "./helpers";
 
 test("pickup order to proof", async ({ page }) => {
   await page.goto("/");
