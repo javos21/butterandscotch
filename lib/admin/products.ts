@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { parsePriceCents } from "@/lib/admin/fee";
 
-/** What the product form sends. Price is the TT$ text staff typed; flavours are one per line. */
+/** What the product form sends. Price is the  text staff typed; flavours are one per line. */
 export type ProductInput = {
   id?: string;
   sectionId: string;
@@ -83,7 +83,7 @@ const MESSAGES: Record<ProductField, string> = {
   sectionId: "Choose a menu section.",
   name: "Enter a name (2–80 characters).",
   description: "Keep the description under 400 characters.",
-  price: "Enter a price between TT$0 and TT$10,000, e.g. 300 or 45.50.",
+  price: "Enter a price between 0 and 10,000, e.g. 300 or 45.50.",
   unitLabel: "Enter a unit, e.g. each, per dozen (1–30 characters).",
   allergenNote: "Keep the allergen note under 80 characters.",
   flavours: "Up to 8 flavours, one per line, each under 40 characters.",

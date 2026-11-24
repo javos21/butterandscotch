@@ -24,7 +24,7 @@ test("pickup order to proof", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/order\//);
   await expect(page.getByText("Your order is not confirmed until we receive and check your payment")).toBeVisible();
-  await expect(page.getByText("TT$650.00").first()).toBeVisible();
+  await expect(page.getByText("650.00").first()).toBeVisible();
 
   await page.getByLabel("Payment receipt").setInputFiles(RECEIPT);
   await page.getByRole("button", { name: "Upload proof" }).click();

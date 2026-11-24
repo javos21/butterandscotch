@@ -93,7 +93,7 @@ test("set a delivery fee", async ({ page }, testInfo) => {
   await signInAsStaff(admin);
   await openAdminOrder(admin, order.orderNumber);
 
-  await admin.getByLabel("Delivery fee (TT$)").fill("45");
+  await admin.getByLabel("Delivery fee", { exact: true }).fill("45");
   await admin.getByRole("button", { name: "Save fee and email total" }).click();
   await expect(admin.getByText("Saved", { exact: true })).toBeVisible();
 

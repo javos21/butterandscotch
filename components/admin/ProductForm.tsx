@@ -117,7 +117,7 @@ export function ProductForm({ item, sections }: { item: Item | null; sections: S
           </div>
 
           <div className="grid gap-5 sm:grid-cols-3">
-            <Field id={ids("price")} label="Price (TT$)" error={errorFor("price")}>
+            <Field id={ids("price")} label="Price" error={errorFor("price")}>
               <Input
                 id={ids("price")}
                 inputMode="decimal"

@@ -201,8 +201,8 @@ describe("order emails", () => {
       },
     });
 
-    expect(sent[0].html).toMatch(/Total: TT\$600\.00 \+ delivery \(we(&#x27;|')ll email your total\)/);
-    expect(sent[0].html).not.toMatch(/Total: TT\$600\.00<\/strong>/);
+    expect(sent[0].html).toMatch(/Total: 600\.00 \+ delivery \(we(&#x27;|')ll email your total\)/);
+    expect(sent[0].html).not.toMatch(/Total: 600\.00<\/strong>/);
   });
 
   test("order_received for a pickup shows a plain total", async () => {
@@ -225,7 +225,7 @@ describe("order emails", () => {
       },
     });
 
-    expect(sent[0].html).toContain("Total: TT$600.00</strong>");
+    expect(sent[0].html).toContain("Total: 600.00</strong>");
     expect(sent[0].html).not.toContain("+ delivery");
   });
 
@@ -595,7 +595,7 @@ describe("staff action emails", () => {
     expect(result).toEqual({ ok: true });
     expect(sent[0].subject).toBe("Order BS-0020 confirmed — receipt attached");
     expect(sent[0].html).toContain("Saturday, 28 November 2026");
-    expect(sent[0].html).toContain("TT$640.00");
+    expect(sent[0].html).toContain("640.00");
     expect(sent[0].html).not.toMatch(/\d{4}-\d{2}-\d{2}/);
     expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
   });
@@ -622,7 +622,7 @@ describe("staff action emails", () => {
     expect(result).toEqual({ ok: true });
     expect(sent[0].subject).toBe("Action needed: payment proof for BS-0021");
     expect(sent[0].html).toContain("The transfer was for the wrong amount");
-    expect(sent[0].html).toContain("TT$640.00");
+    expect(sent[0].html).toContain("640.00");
     expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
   });
 
@@ -648,8 +648,8 @@ describe("staff action emails", () => {
 
     expect(result).toEqual({ ok: true });
     expect(sent[0].subject).toBe("Your total for BS-0022 is ready — pay to confirm");
-    expect(sent[0].html).toContain("TT$50.00");
-    expect(sent[0].html).toContain("TT$650.00");
+    expect(sent[0].html).toContain("50.00");
+    expect(sent[0].html).toContain("650.00");
     expect(sent[0].html).toContain("Sample Bank");
     expect(sent[0].html).toContain("Account # (from Scotiabank)");
     expect(sent[0].html).toContain("Account # (from another bank)");

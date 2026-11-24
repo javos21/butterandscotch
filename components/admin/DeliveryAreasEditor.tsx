@@ -22,7 +22,7 @@ import { parseFeeCents } from "@/lib/admin/fee";
 import { formatMoney } from "@/lib/money";
 import type { DeliveryArea } from "@/lib/types";
 
-const FEE_ERROR = "Enter a fee between TT$0 and TT$1,000";
+const FEE_ERROR = "Enter a fee between 0 and 1,000";
 
 /** Add or edit one area. The form is rebuilt each time the dialog opens, so it never shows stale values. */
 function AreaDialog({
@@ -87,7 +87,7 @@ function AreaDialog({
             <FieldError id={`${nameId}-error`} message={errors.name} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor={feeId}>Delivery fee (TT$)</Label>
+            <Label htmlFor={feeId}>Delivery fee</Label>
             <Input
               id={feeId}
               inputMode="decimal"

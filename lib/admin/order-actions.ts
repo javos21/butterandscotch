@@ -6,7 +6,7 @@ import type { BankDetails } from "@/lib/types";
 const ORDER_NOT_FOUND = "Order not found";
 const REFRESH_ERROR = "Order was updated — refresh";
 const SAVE_ERROR = "Couldn't save the change — try again";
-const FEE_ERROR = "Enter a fee between TT$0 and TT$1,000";
+const FEE_ERROR = "Enter a fee between 0 and 1,000";
 const FEE_MAX_CENTS = 100_000;
 const REASON_ERROR = "Please give a reason (3–300 characters)";
 const REASON_MIN = 3;

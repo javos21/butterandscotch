@@ -166,10 +166,10 @@ describe("saveArea", () => {
     expect(calls.areaSaves[0]).toMatchObject({ active: false });
   });
 
-  test("refuses a fee above TT$1,000", async () => {
+  test("refuses a fee above 1,000", async () => {
     const { deps } = makeRepo();
     const result = await saveArea({ ...area, feeCents: 100_001 }, deps);
-    expect(result).toEqual({ error: "Enter a fee between TT$0 and TT$1,000", field: "feeCents" });
+    expect(result).toEqual({ error: "Enter a fee between 0 and 1,000", field: "feeCents" });
   });
 });
 

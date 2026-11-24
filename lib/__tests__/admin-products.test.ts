@@ -92,13 +92,13 @@ function existing(overrides: Partial<Row> = {}): Row {
 }
 
 describe("parsePriceCents", () => {
-  test("accepts plain amounts, TT$ and thousands commas", () => {
+  test("accepts plain amounts,  and thousands commas", () => {
     expect(parsePriceCents("300")).toBe(30000);
     expect(parsePriceCents("45.50")).toBe(4550);
-    expect(parsePriceCents("TT$1,250")).toBe(125000);
+    expect(parsePriceCents("1,250")).toBe(125000);
     expect(parsePriceCents("10000")).toBe(1_000_000);
   });
-  test("refuses junk, negatives and amounts over TT$10,000", () => {
+  test("refuses junk, negatives and amounts over 10,000", () => {
     for (const bad of ["", "abc", "-5", "12.345", "10000.01"]) expect(parsePriceCents(bad)).toBeNull();
   });
 });

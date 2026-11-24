@@ -18,7 +18,7 @@ describe("parseFeeCents", () => {
     expect(parseFeeCents("  12.5 ")).toBe(1250);
   });
 
-  test("the maximum TT$1,000 is accepted", () => {
+  test("the maximum 1,000 is accepted", () => {
     expect(parseFeeCents("1000")).toBe(100_000);
   });
 
@@ -35,7 +35,7 @@ describe("parseFeeCents", () => {
     expect(parseFeeCents("12.345")).toBeNull();
   });
 
-  test("an amount above TT$1,000 is rejected", () => {
+  test("an amount above 1,000 is rejected", () => {
     expect(parseFeeCents("1000.01")).toBeNull();
   });
 

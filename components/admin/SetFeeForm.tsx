@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { parseFeeCents } from "@/lib/admin/fee";
 
-const FEE_ERROR = "Enter a fee between TT$0 and TT$1,000";
+const FEE_ERROR = "Enter a fee between 0 and 1,000";
 
 /** Sets the delivery fee on an order waiting for a quote. The customer is emailed the total. */
 export function SetFeeForm({ orderId }: { orderId: string }) {
@@ -43,7 +43,7 @@ export function SetFeeForm({ orderId }: { orderId: string }) {
       </p>
       <form onSubmit={submit} noValidate className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor={inputId}>Delivery fee (TT$)</Label>
+          <Label htmlFor={inputId}>Delivery fee</Label>
           <Input
             id={inputId}
             inputMode="decimal"

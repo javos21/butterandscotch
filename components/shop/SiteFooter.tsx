@@ -7,7 +7,10 @@ export function SiteFooter({ whatsappHref }: { whatsappHref: string | null }) {
   return (
     <footer className="mt-16 border-t border-olive-line bg-cream">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-4 py-8 sm:flex-row sm:justify-between">
-        <Image src="/brand/logo-red-wide.png" alt="Butter and Scotch" width={471} height={238} className="h-12 w-auto" />
+        <div className="flex flex-col items-center gap-2 sm:items-start">
+          <Image src="/brand/logo-red-wide.png" alt="Butter and Scotch" width={471} height={238} className="h-12 w-auto" />
+          <p className="text-sm text-olive">All prices are in TTD.</p>
+        </div>
         <div className="flex flex-col items-center gap-3 text-base font-bold text-olive-ink sm:flex-row sm:gap-6">
           {whatsappHref ? (
             <a

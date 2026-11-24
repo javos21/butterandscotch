@@ -92,7 +92,7 @@ insert into items (
   )
 on conflict (id) do nothing;
 
--- Delivery areas. Fees in cents (TT$). A null fee is "Other area": staff quote it.
+-- Delivery areas. Fees in cents (). A null fee is "Other area": staff quote it.
 
 insert into delivery_areas (id, name, fee_cents, active, sort) values
   ('00000000-0000-0000-0000-000000000d01', 'Port of Spain', 3000, true, 1),

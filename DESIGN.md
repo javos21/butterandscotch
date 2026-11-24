@@ -169,7 +169,7 @@ A committed two-voice palette: crimson for intent, olive for information, on war
 - **Display** (400, clamp(2.25rem, 8vw, 3.75rem), 1.04): the one hero headline per page ("Christmas bakes, made to share."), centred, Oxblood Ink.
 - **Headline** (400, clamp(1.75rem, 5.5vw, 2.5rem), 1.1): section heads ("More Christmas favourites", "Ordering made easy"), product page names. Deep Crimson.
 - **Title** (400, 1.375rem, 1.12): product names on cards, wrapping to two lines freely. Deep Crimson.
-- **Price** (Nunito 800, 1.25rem, 1.2): "TT$600", "TT$300 per dozen". Olive Ink. Unit text stays in the same weight; never shrink "per dozen" into fine print.
+- **Price** (Nunito 800, 1.25rem, 1.2): "600", "300 per dozen". Olive Ink. Unit text stays in the same weight; never shrink "per dozen" into fine print.
 - **Body** (Nunito 500, 1rem, 1.55): descriptions, helper text, policy copy; max 60ch.
 - **Label** (Nunito 700, 0.9375rem, 1.3): buttons, chips, form labels, meta rows, badge text.
 
@@ -195,7 +195,7 @@ The system is flat and paper-like. Depth comes from tone (Card Cream on Cream Pa
 Confident and tactile, like a ribbon you pull.
 - **Shape:** gently rounded rectangle (16px radius), 52px tall; full width on phones.
 - **Primary:** Ribbon Crimson fill, Cream text, Nunito 700. Card "Add" buttons span the card width.
-- **With price:** product page action reads "Add to basket · TT$50"; the price updates live with quantity.
+- **With price:** product page action reads "Add to basket · 50"; the price updates live with quantity.
 - **Hover / Focus / Pressed:** fill shifts to Deep Crimson; pressed scales to 0.98; focus ring 3px Holly offset 2px.
 - **Secondary:** Card Cream fill, 1px Olive border, Olive Ink text ("Find my order", Cancel).
 - **Disabled:** 45% opacity, no hover, `aria-disabled`.
@@ -209,7 +209,7 @@ The signature unit of the shop.
 - **Seasonal badge:** cream pill on the photo's top-left, Deep Crimson Label text "Seasonal".
 
 ### Option chips (packaging)
-- **Style:** two side-by-side 56px chips, 10px radius, 1px Olive border, an outline icon (bag, jar) and "Bag · TT$50".
+- **Style:** two side-by-side 56px chips, 10px radius, 1px Olive border, an outline icon (bag, jar) and "Bag · 50".
 - **Selected:** Ribbon Crimson fill, Cream text, a filled check circle replacing the empty radio.
 - **Helper:** limits sit under the chips in Olive Label ("Maximum 10 bags · Maximum 2 jars").
 
@@ -255,7 +255,7 @@ The signature unit of the shop.
 - **Do** keep the page on Cream Paper (#FEF8F1) and cards on Card Cream (#FFFCF7) with a 1px Olive Line (#CBC7AE) border; outline every interactive control in Olive (#6B6D38).
 - **Do** use Ribbon Crimson (#820914) for every primary action and the payment notice band, and nothing decorative.
 - **Do** set product names in Young Serif and every price, button and number in Nunito 800/700.
-- **Do** show the price on every card and in the Add to basket button ("Add to basket · TT$50").
+- **Do** show the price on every card and in the Add to basket button ("Add to basket · 50").
 - **Do** write allergen notes as text ("Contains nuts") next to the price, not only as an icon or colour (PRODUCT.md: allergen information is shown where the customer decides).
 - **Do** keep tap targets at least 44px (buttons 52px) and primary buttons full width on phones.
 - **Do** use the owner's real photos; until they exist, use plain labelled placeholders.

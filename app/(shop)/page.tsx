@@ -62,9 +62,10 @@ export default async function MenuPage() {
           <span className="h-7 w-px bg-olive-line" aria-hidden="true" />
           <span className="flex items-center gap-2">
             <Landmark className="size-6 text-olive" strokeWidth={1.75} aria-hidden="true" />
-            TTD · Bank transfer
+            Bank transfer
           </span>
         </div>
+        <p className="mt-2 text-center text-sm text-olive">All prices are in TTD.</p>
       </div>
 
       {settings.store_open ? (

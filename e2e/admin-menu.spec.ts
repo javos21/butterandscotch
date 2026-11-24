@@ -54,13 +54,13 @@ test("a new price shows on the shop", async ({ page }) => {
     await signInAsStaff(page);
     await page.goto(`/admin/menu/${original.id}`);
     await waitForHydration(page);
-    await page.getByLabel("Price (TT$)").fill("275.50");
+    await page.getByLabel("Price", { exact: true }).fill("275.50");
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Saved")).toBeVisible();
 
     const shop = await page.context().newPage();
     await shop.goto("/");
-    await expect(menuCard(shop, ITEM).getByText("TT$275.50")).toBeVisible();
+    await expect(menuCard(shop, ITEM).getByText("275.50")).toBeVisible();
   } finally {
     await restoreLoaf(original);
   }
@@ -71,9 +71,9 @@ test("a bad price is refused next to the field", async ({ page }) => {
   await signInAsStaff(page);
   await page.goto(`/admin/menu/${original.id}`);
   await waitForHydration(page);
-  await page.getByLabel("Price (TT$)").fill("lots");
+  await page.getByLabel("Price", { exact: true }).fill("lots");
   await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByText(/Enter a price between TT\$0 and TT\$10,000/).first()).toBeVisible();
+  await expect(page.getByText(/Enter a price between 0 and 10,000/).first()).toBeVisible();
   expect((await loadLoaf()).price_cents).toBe(original.price_cents);
 });
 
