@@ -49,6 +49,31 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
+/** Card title row: heading, optional helper text, and an optional action (e.g. "Add area") on the right. */
+export function SectionHeader({
+  id,
+  title,
+  description,
+  action,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-start sm:justify-between md:px-6">
+      <div className="space-y-1">
+        <h2 id={id} className="text-base font-semibold">
+          {title}
+        </h2>
+        {description ? <p className="max-w-prose text-sm text-muted-foreground">{description}</p> : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
+
 /** A settings card with its own form and Save button. Stacks on phones, inputs are full width. */
 export function SectionCard({
   id,
@@ -66,19 +91,16 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section aria-labelledby={id} className="rounded-xl border bg-card p-4 md:p-6">
-      <form onSubmit={onSubmit} noValidate className="space-y-5">
-        <div className="space-y-1">
-          <h2 id={id} className="text-base font-semibold">
-            {title}
-          </h2>
-          {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+    <section aria-labelledby={id} className="rounded-xl border bg-card">
+      <form onSubmit={onSubmit} noValidate>
+        <SectionHeader id={id} title={title} description={description} />
+        <div className="space-y-5 p-4 md:p-6">{children}</div>
+        <div className="flex justify-end border-t px-4 py-3 md:px-6">
+          <Button type="submit" className="min-h-11 w-full gap-2 sm:w-auto" disabled={isPending}>
+            {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+            Save changes
+          </Button>
         </div>
-        {children}
-        <Button type="submit" className="min-h-11 w-full gap-2 sm:w-auto" disabled={isPending}>
-          {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-          Save changes
-        </Button>
       </form>
     </section>
   );

@@ -20,7 +20,7 @@ function Field({ id, label, error, children }: { id: string; label: string; erro
   );
 }
 
-function ShopSection({ settings }: { settings: Settings }) {
+export function ShopSection({ settings }: { settings: Settings }) {
   const id = useId();
   const [storeOpen, setStoreOpen] = useState(settings.store_open);
   const [leadTime, setLeadTime] = useState(String(settings.lead_time_days));
@@ -41,14 +41,19 @@ function ShopSection({ settings }: { settings: Settings }) {
   return (
     <SectionCard
       id={`${id}-shop`}
-      title="Shop"
-      description="Turn the shop off to stop new orders. Lead time is how many days ahead customers must book."
+      title="Taking orders"
+      description="Switch the shop off to stop new orders. Lead time is how many days ahead customers must book; the daily limit caps orders per day."
       isPending={isPending}
       onSubmit={submit}
     >
       {/* The whole row is the tap target: tapping the label text toggles the switch. */}
       <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
-        <span className="text-sm font-medium">Taking orders</span>
+        <span className="space-y-0.5">
+          <span className="block text-sm font-medium">Shop is open</span>
+          <span className="block text-sm text-muted-foreground">
+            {storeOpen ? "Customers can place orders." : "The menu is hidden; no new orders."}
+          </span>
+        </span>
         <Switch id={`${id}-open`} checked={storeOpen} onCheckedChange={setStoreOpen} />
       </label>
       <div className="grid gap-5 md:grid-cols-2">
@@ -94,7 +99,7 @@ const BANK_FIELDS: { key: keyof BankDetails; label: string }[] = [
   { key: "account_no_other_bank", label: "Account number (other bank)" },
 ];
 
-function BankSection({ settings }: { settings: Settings }) {
+export function BankSection({ settings }: { settings: Settings }) {
   const id = useId();
   const [bank, setBank] = useState<BankDetails>(settings.bank_details);
   const { run, isPending, errors } = useSettingsSave();
@@ -135,33 +140,22 @@ function BankSection({ settings }: { settings: Settings }) {
   );
 }
 
-function PickupSection({ settings }: { settings: Settings }) {
+export function PickupSection({ settings }: { settings: Settings }) {
   const id = useId();
   const [pickupInfo, setPickupInfo] = useState(settings.pickup_info);
-  const [whatsapp, setWhatsapp] = useState(settings.whatsapp_number);
-  const [notifyEmail, setNotifyEmail] = useState(settings.notify_email ?? "");
   const { run, isPending, errors } = useSettingsSave();
+  const pickupId = `${id}-pickup`;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    run(() =>
-      updateSettingsAction({
-        pickup_info: pickupInfo,
-        whatsapp_number: whatsapp,
-        notify_email: notifyEmail,
-      }),
-    );
+    run(() => updateSettingsAction({ pickup_info: pickupInfo }));
   }
-
-  const pickupId = `${id}-pickup`;
-  const whatsappId = `${id}-whatsapp`;
-  const emailId = `${id}-notify`;
 
   return (
     <SectionCard
-      id={`${id}-contact`}
-      title="Pickup and contact"
-      description="Pickup info goes into the ready email for pickup orders. Notification email gets a copy of new orders."
+      id={`${id}-pickup-heading`}
+      title="Pickup"
+      description="Where and when customers collect. Sent in the ready email for pickup orders, and shown once an order is confirmed."
       isPending={isPending}
       onSubmit={submit}
     >
@@ -169,13 +163,39 @@ function PickupSection({ settings }: { settings: Settings }) {
         <Textarea
           id={pickupId}
           rows={4}
-          className="min-h-24"
+          className="min-h-28"
+          placeholder="e.g. 12 Example St, Maraval. Pickup 10am–4pm."
           value={pickupInfo}
           onChange={(event) => setPickupInfo(event.target.value)}
           aria-invalid={errors.pickup_info ? true : undefined}
           aria-describedby={errors.pickup_info ? `${pickupId}-error` : undefined}
         />
       </Field>
+    </SectionCard>
+  );
+}
+
+export function ContactSection({ settings }: { settings: Settings }) {
+  const id = useId();
+  const [whatsapp, setWhatsapp] = useState(settings.whatsapp_number);
+  const [notifyEmail, setNotifyEmail] = useState(settings.notify_email ?? "");
+  const { run, isPending, errors } = useSettingsSave();
+  const whatsappId = `${id}-whatsapp`;
+  const emailId = `${id}-notify`;
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    run(() => updateSettingsAction({ whatsapp_number: whatsapp, notify_email: notifyEmail }));
+  }
+
+  return (
+    <SectionCard
+      id={`${id}-contact`}
+      title="Contact"
+      description="Customers reach you on WhatsApp for problems. New orders and proofs to check are emailed to the notification address."
+      isPending={isPending}
+      onSubmit={submit}
+    >
       <div className="grid gap-5 md:grid-cols-2">
         <Field id={whatsappId} label="WhatsApp number" error={errors.whatsapp_number}>
           <Input
@@ -184,6 +204,7 @@ function PickupSection({ settings }: { settings: Settings }) {
             inputMode="tel"
             autoComplete="off"
             className="h-11"
+            placeholder="868 123 4567"
             value={whatsapp}
             onChange={(event) => setWhatsapp(event.target.value)}
             aria-invalid={errors.whatsapp_number ? true : undefined}
@@ -208,7 +229,7 @@ function PickupSection({ settings }: { settings: Settings }) {
   );
 }
 
-function PolicySection({ settings }: { settings: Settings }) {
+export function PolicySection({ settings }: { settings: Settings }) {
   const id = useId();
   const [policy, setPolicy] = useState(settings.policy_text);
   const { run, isPending, errors } = useSettingsSave();
@@ -242,14 +263,3 @@ function PolicySection({ settings }: { settings: Settings }) {
   );
 }
 
-/** The four settings cards. Each card saves only its own fields and has its own Save button. */
-export function SettingsForm({ settings }: { settings: Settings }) {
-  return (
-    <div className="space-y-6">
-      <ShopSection settings={settings} />
-      <BankSection settings={settings} />
-      <PickupSection settings={settings} />
-      <PolicySection settings={settings} />
-    </div>
-  );
-}
