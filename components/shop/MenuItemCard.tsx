@@ -43,19 +43,25 @@ export function MenuItemCard({ item, priority }: { item: Item; priority?: boolea
           className="aspect-[4/3]"
         />
       </Link>
-      <div className="flex flex-1 flex-col gap-1 px-1.5 pt-3">
-        {item.seasonal ? (
-          <span className="w-fit rounded-full bg-cream-warm px-2.5 py-0.5 text-xs font-bold text-crimson-deep">
-            Seasonal
-          </span>
-        ) : null}
-        <h3 className="font-display text-[1.2rem] leading-[1.12] text-crimson-deep sm:text-[1.375rem]">
+      {/* Fixed slots: every card reserves the same height for its tag, name, price and note, so the
+          Add buttons line up across a row whether or not an item is seasonal or has an allergen note. */}
+      <div className="flex flex-1 flex-col px-1.5 pt-3">
+        <div className="flex h-7 items-start">
+          {item.seasonal ? (
+            <span className="w-fit rounded-full bg-cream-warm px-2.5 py-0.5 text-xs font-bold text-crimson-deep">
+              Seasonal
+            </span>
+          ) : null}
+        </div>
+        <h3 className="min-h-[2.25rem] font-display text-[1.2rem] leading-[1.12] text-crimson-deep sm:min-h-[2.5rem] sm:text-[1.375rem]">
           <Link href={href} className="hover:underline hover:decoration-1 hover:underline-offset-4">
             {item.name}
           </Link>
         </h3>
-        <p className="text-lg font-extrabold leading-tight text-olive-ink sm:text-xl">{priceLabel(item)}</p>
-        {item.allergen_note ? <p className="text-[0.9375rem] text-olive">{item.allergen_note}</p> : null}
+        <p className="mt-1 min-h-[3rem] text-lg font-extrabold leading-tight text-olive-ink sm:min-h-[1.75rem] sm:text-xl">
+          {priceLabel(item)}
+        </p>
+        <p className="min-h-[1.5rem] text-[0.9375rem] text-olive">{item.allergen_note ?? ""}</p>
       </div>
       <div className="px-0.5 pt-3">
         {room <= 0 ? (
