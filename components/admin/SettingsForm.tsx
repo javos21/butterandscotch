@@ -46,10 +46,11 @@ function ShopSection({ settings }: { settings: Settings }) {
       isPending={isPending}
       onSubmit={submit}
     >
-      <div className="flex min-h-11 items-center justify-between gap-4">
-        <Label htmlFor={`${id}-open`}>Taking orders</Label>
+      {/* The whole row is the tap target: tapping the label text toggles the switch. */}
+      <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
+        <span className="text-sm font-medium">Taking orders</span>
         <Switch id={`${id}-open`} checked={storeOpen} onCheckedChange={setStoreOpen} />
-      </div>
+      </label>
       <div className="grid gap-5 md:grid-cols-2">
         <Field id={`${id}-lead`} label="Lead time (days)" error={errors.lead_time_days}>
           <Input

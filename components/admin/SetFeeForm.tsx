@@ -7,17 +7,9 @@ import { toastActionResult } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseFeeCents } from "@/lib/admin/fee";
 
 const FEE_ERROR = "Enter a fee between TT$0 and TT$1,000";
-const FEE_MAX_CENTS = 100_000;
-
-/** Turns "12.5" or "12" into cents, or null when the text is not a fee in range. */
-export function parseFeeCents(text: string): number | null {
-  const trimmed = text.trim();
-  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return null;
-  const cents = Math.round(Number(trimmed) * 100);
-  return cents >= 0 && cents <= FEE_MAX_CENTS ? cents : null;
-}
 
 /** Sets the delivery fee on an order waiting for a quote. The customer is emailed the total. */
 export function SetFeeForm({ orderId }: { orderId: string }) {

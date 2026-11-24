@@ -4,10 +4,11 @@ import { useId, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { blockDatesAction, unblockDateAction } from "@/app/admin/(protected)/settings/actions";
 import { toastActionResult } from "@/components/admin/action-toast";
-import { FieldError, useSettingsSave } from "@/components/admin/SettingsFields";
+import { FieldError, SAVE_FAILED, useSettingsSave } from "@/components/admin/SettingsFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { SettingsResult } from "@/lib/admin/settings";
 import { formatFulfilDate } from "@/lib/format-date";
 
 type BlockedDate = { date: string; note: string | null };
@@ -42,7 +43,13 @@ export function BlockedDatesEditor({ blocked }: { blocked: BlockedDate[] }) {
   async function remove(date: string) {
     setRemovingDate(date);
     setRemoveError(undefined);
-    const result = await unblockDateAction(date);
+    let result: SettingsResult;
+    try {
+      result = await unblockDateAction(date);
+    } catch (error) {
+      console.error(error);
+      result = { error: SAVE_FAILED };
+    }
     setRemovingDate(null);
     toastActionResult(result);
     if ("error" in result) setRemoveError(result.error);

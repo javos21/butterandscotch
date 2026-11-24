@@ -6,7 +6,12 @@ import { toastActionResult } from "@/components/admin/action-toast";
 import { Button } from "@/components/ui/button";
 import type { SettingsResult } from "@/lib/admin/settings";
 
-/** Runs a settings action, shows its toast, and keeps any field error keyed by the field name. */
+export const SAVE_FAILED = "Couldn't save — try again";
+
+/**
+ * Runs a settings action, shows its toast, and keeps any field error keyed by the field name.
+ * A thrown error is logged and shown as a toast, so the staff member is never left without feedback.
+ */
 export function useSettingsSave() {
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -14,7 +19,14 @@ export function useSettingsSave() {
   function run(action: () => Promise<SettingsResult>, onSaved?: () => void) {
     setErrors({});
     startTransition(async () => {
-      const result = await action();
+      let result: SettingsResult;
+      try {
+        result = await action();
+      } catch (error) {
+        console.error(error);
+        toastActionResult({ error: SAVE_FAILED });
+        return;
+      }
       toastActionResult(result);
       if ("error" in result) {
         if (result.field) setErrors({ [result.field]: result.error });

@@ -3,7 +3,7 @@
 import { useId, useRef, useState, type FormEvent } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { saveAreaAction } from "@/app/admin/(protected)/settings/actions";
-import { parseFeeCents } from "@/components/admin/SetFeeForm";
+import { parseFeeCents } from "@/lib/admin/fee";
 import { FieldError, useSettingsSave } from "@/components/admin/SettingsFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,10 +86,16 @@ function AreaRow({ area, sort, onSaved }: { area?: DeliveryArea; sort: number; o
           <FieldError id={`${feeId}-error`} message={feeMessage} />
         </div>
       </div>
-      <div className="flex min-h-11 items-center justify-between gap-4">
-        <Label htmlFor={activeId}>Switched on</Label>
-        <Switch id={activeId} checked={active} onCheckedChange={setActive} aria-describedby={activeError ? `${activeId}-error` : undefined} />
-      </div>
+      {/* The whole row is the tap target: tapping the label text toggles the switch. */}
+      <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
+        <span className="text-sm font-medium">Switched on</span>
+        <Switch
+          id={activeId}
+          checked={active}
+          onCheckedChange={setActive}
+          aria-describedby={activeError ? `${activeId}-error` : undefined}
+        />
+      </label>
       <FieldError id={`${activeId}-error`} message={activeError} />
       <Button type="submit" className="min-h-11 w-full gap-2 sm:w-auto" disabled={isPending}>
         {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
