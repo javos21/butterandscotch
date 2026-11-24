@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, Download, Mail, MessageCircle } from "lucide-react";
 import { OrderActionsBar } from "@/components/admin/OrderActionsBar";
 import { ProofReviewCard } from "@/components/admin/ProofReviewCard";
+import { RequestProofAgainButton } from "@/components/admin/RequestProofAgainButton";
 import { SetFeeForm } from "@/components/admin/SetFeeForm";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -218,6 +219,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               Payment proof
             </h2>
             <p className="text-sm">No proof file — ask the customer to re-upload</p>
+            <RequestProofAgainButton orderId={order.id} />
           </section>
         )
       ) : null}

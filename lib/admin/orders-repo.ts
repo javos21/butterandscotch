@@ -69,6 +69,17 @@ export function adminOrderRepo(staffDb: StaffClient): AdminOrderRepo {
       if (error) throw new Error(error.message);
     },
 
+    async hasSubmittedPayment(orderId) {
+      const { data, error } = await db
+        .from("payments")
+        .select("id")
+        .eq("order_id", orderId)
+        .eq("status", "submitted")
+        .limit(1);
+      if (error) throw new Error(error.message);
+      return data.length > 0;
+    },
+
     async addEvent(orderId, kind, detail, staffId) {
       const { error } = await db.from("order_events").insert({
         order_id: orderId,

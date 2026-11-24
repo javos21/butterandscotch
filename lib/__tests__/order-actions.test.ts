@@ -4,6 +4,7 @@ import {
   changeDate,
   markCompleted,
   markReady,
+  requestProofAgain,
   setDeliveryFee,
   type AdminOrder,
   type AdminOrderRepo,
@@ -51,6 +52,9 @@ type State = {
   /** Runs inside updateOrder, before its status check: simulates a concurrent staff action. */
   raceBeforeUpdate: (() => void) | null;
   updateThrows: boolean;
+  /** Whether the order has a payment row still in `submitted`. */
+  submittedPayment: boolean;
+  reminderSentAt: string | null;
 };
 
 function baseOrder(overrides: Partial<AdminOrder> = {}): AdminOrder {
@@ -80,6 +84,8 @@ function freshState(status: OrderStatus = "awaiting_quote", overrides: Partial<A
     rpcError: null,
     raceBeforeUpdate: null,
     updateThrows: false,
+    submittedPayment: false,
+    reminderSentAt: "2026-11-23T09:00:00.000Z",
   };
 }
 
@@ -96,8 +102,14 @@ function fakeRepo(state: State): AdminOrderRepo {
       state.order.status = set.status;
       if (set.deliveryFeeCents !== undefined) state.order.deliveryFeeCents = set.deliveryFeeCents;
       if (set.totalCents !== undefined) state.order.totalCents = set.totalCents;
-      if (set.paymentWindowStartedAt !== undefined) state.windowStartedAt = set.paymentWindowStartedAt;
+      if (set.paymentWindowStartedAt !== undefined) {
+        state.windowStartedAt = set.paymentWindowStartedAt;
+        state.reminderSentAt = null;
+      }
       return true;
+    },
+    async hasSubmittedPayment() {
+      return state.submittedPayment;
     },
     async changeFulfilDate(orderId, newDate, overrideCap) {
       state.rpcCalls.push({ orderId, newDate, overrideCap });
@@ -391,6 +403,62 @@ describe("cancelOrder", () => {
     const result = await cancelOrder({ orderId: ORDER_ID, reason: "Changed my mind" }, deps(state, mail.email));
 
     expect(result).toEqual({ error: REFRESH_ERROR });
+    expect(mail.sent).toHaveLength(0);
+  });
+});
+
+describe("requestProofAgain", () => {
+  const PROOF_AGAIN_REASON = "We couldn't find your payment proof — please upload it again.";
+
+  test("reopens payment for a stuck order, clears the reminder, records an event and emails the reason", async () => {
+    const state = freshState("proof_submitted");
+    const mail = recordingEmail();
+    const result = await requestProofAgain({ orderId: ORDER_ID }, deps(state, mail.email));
+
+    expect(result).toEqual({ ok: true, emailFailed: false });
+    expect(state.order.status).toBe("awaiting_payment");
+    expect(state.windowStartedAt).toBe(NOW.toISOString());
+    expect(state.reminderSentAt).toBeNull();
+    expect(state.events).toEqual([
+      { kind: "proof_requested_again", detail: { reason: PROOF_AGAIN_REASON }, staffId: STAFF_ID },
+    ]);
+    expect(mail.sent).toHaveLength(1);
+    expect(mail.sent[0].subject).toBe("Action needed: payment proof for BS-0142");
+    expect(mail.sent[0].html).toContain("find your payment proof — please upload it again.");
+  });
+
+  test("is refused when a submitted proof is waiting to be reviewed", async () => {
+    const state = freshState("proof_submitted");
+    state.submittedPayment = true;
+    const mail = recordingEmail();
+    const result = await requestProofAgain({ orderId: ORDER_ID }, deps(state, mail.email));
+
+    expect(result).toEqual({ error: "This order has a proof to review — use Confirm or Reject." });
+    expect(state.order.status).toBe("proof_submitted");
+    expect(state.events).toHaveLength(0);
+    expect(mail.sent).toHaveLength(0);
+  });
+
+  test("is refused when the order is not waiting for a proof", async () => {
+    const state = freshState("awaiting_payment");
+    const mail = recordingEmail();
+    const result = await requestProofAgain({ orderId: ORDER_ID }, deps(state, mail.email));
+
+    expect(result).toEqual({ error: "Can't ask for proof again on an order that is awaiting payment — not confirmed" });
+    expect(state.order.status).toBe("awaiting_payment");
+    expect(mail.sent).toHaveLength(0);
+  });
+
+  test("refreshes when a concurrent change moved the order first", async () => {
+    const state = freshState("proof_submitted");
+    state.raceBeforeUpdate = () => {
+      state.order.status = "cancelled";
+    };
+    const mail = recordingEmail();
+    const result = await requestProofAgain({ orderId: ORDER_ID }, deps(state, mail.email));
+
+    expect(result).toEqual({ error: REFRESH_ERROR });
+    expect(state.events).toHaveLength(0);
     expect(mail.sent).toHaveLength(0);
   });
 });

@@ -1,6 +1,6 @@
 import { sendTemplate, type EmailDeps } from "@/lib/email/send";
 import { trinidadToday } from "@/lib/dates";
-import { nextStatus, OrderStateError, type OrderStatus, type StaffAction } from "@/lib/order-status";
+import { nextStatus, OrderStateError, STATUS_LABEL, type OrderStatus, type StaffAction } from "@/lib/order-status";
 import type { BankDetails } from "@/lib/types";
 
 const ORDER_NOT_FOUND = "Order not found";
@@ -55,6 +55,8 @@ export type AdminOrderRepo = {
   updateOrder(orderId: string, expectStatus: OrderStatus, set: OrderUpdate): Promise<boolean>;
   /** Calls staff_change_fulfil_date. Throws with the database's exception text as the message. */
   changeFulfilDate(orderId: string, newDate: string, overrideCap: boolean): Promise<void>;
+  /** True when the order has a payment row still in `submitted`. */
+  hasSubmittedPayment(orderId: string): Promise<boolean>;
   addEvent(orderId: string, kind: string, detail: Record<string, unknown>, staffId: string): Promise<void>;
 };
 
@@ -254,6 +256,55 @@ export async function markCompleted(input: MarkCompletedInput, deps: OrderAction
 
   await recordEvent(deps.repo, order.id, "completed", {}, deps.staff.userId);
   return { ok: true };
+}
+
+export const PROOF_AGAIN_REASON = "We couldn't find your payment proof — please upload it again.";
+
+/**
+ * For a stuck order: in proof_submitted with no submitted payment row, so there is nothing to confirm
+ * or reject. Moves it back to awaiting_payment with a fresh payment window and emails the customer.
+ */
+export async function requestProofAgain(
+  input: { orderId: string },
+  deps: OrderActionDeps,
+): Promise<OrderActionResult> {
+  const order = await deps.repo.findOrder(input.orderId);
+  if (!order) return { error: ORDER_NOT_FOUND };
+  if (order.status !== "proof_submitted") {
+    return { error: `Can't ask for proof again on an order that is ${STATUS_LABEL[order.status].toLowerCase()}` };
+  }
+  if (await deps.repo.hasSubmittedPayment(order.id)) {
+    return { error: "This order has a proof to review — use Confirm or Reject." };
+  }
+
+  const failure = await saveOrder(deps.repo, order, {
+    status: "awaiting_payment",
+    paymentWindowStartedAt: deps.now().toISOString(),
+  });
+  if (failure) return { error: failure };
+
+  await recordEvent(deps.repo, order.id, "proof_requested_again", { reason: PROOF_AGAIN_REASON }, deps.staff.userId);
+
+  return finish(deps, async () => {
+    try {
+      const sent = await sendTemplate(deps.email, {
+        orderId: order.id,
+        template: "proof_rejected",
+        to: order.email,
+        data: {
+          orderNumber: order.orderNumber,
+          token: order.accessToken,
+          customerName: order.customerName,
+          reason: PROOF_AGAIN_REASON,
+          totalCents: order.totalCents,
+        },
+      });
+      return !sent.ok;
+    } catch (err) {
+      console.error("[order-actions] proof_rejected email failed", order.id, err);
+      return true;
+    }
+  });
 }
 
 /** Cancels an order with a reason, then emails the customer. */

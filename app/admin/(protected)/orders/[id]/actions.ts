@@ -7,6 +7,7 @@ import {
   changeDate,
   markCompleted,
   markReady,
+  requestProofAgain,
   setDeliveryFee,
   type CancelOrderInput,
   type ChangeDateInput,
@@ -96,6 +97,18 @@ export async function markCompletedAction(input: MarkCompletedInput): Promise<Or
   if (!parsed.success) return { error: SAFE_ERROR };
 
   const result = await markCompleted(parsed.data, await actionDeps(staff.userId));
+  revalidatePath("/admin", "layout");
+  return result;
+}
+
+/** Asks the customer to upload payment proof again on a stuck order (proof_submitted with no proof file). */
+export async function requestProofAgainAction(input: { orderId: string }): Promise<OrderActionResult> {
+  const staff = await requireStaff();
+
+  const parsed = z.object({ orderId: orderIdSchema }).safeParse(input);
+  if (!parsed.success) return { error: SAFE_ERROR };
+
+  const result = await requestProofAgain(parsed.data, await actionDeps(staff.userId));
   revalidatePath("/admin", "layout");
   return result;
 }
