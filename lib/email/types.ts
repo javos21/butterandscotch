@@ -49,12 +49,63 @@ export type OrderLinksData = {
   orders: { orderNumber: string; token: string; fulfilDate: string }[];
 };
 
+type CustomerOrderBase = {
+  orderNumber: string;
+  token: string;
+  customerName: string;
+};
+
+export type OrderConfirmedData = CustomerOrderBase & {
+  /** ISO "YYYY-MM-DD" business date. */
+  fulfilDate: string;
+  fulfilment: "pickup" | "delivery";
+  totalCents: number;
+};
+
+export type ProofRejectedData = CustomerOrderBase & {
+  reason: string;
+  totalCents: number;
+};
+
+export type TotalReadyData = CustomerOrderBase & {
+  deliveryFeeCents: number;
+  totalCents: number;
+  bank: BankDetails;
+};
+
+export type DateChangedData = CustomerOrderBase & {
+  /** ISO "YYYY-MM-DD" business dates. */
+  oldDate: string;
+  newDate: string;
+};
+
+export type OrderCancelledData = CustomerOrderBase & {
+  reason: string;
+};
+
+export type OrderReadyData = CustomerOrderBase & {
+  fulfilment: "pickup" | "delivery";
+  /** Collection instructions for pickup orders. Null when there are none. */
+  pickupInfo: string | null;
+};
+
 export type TemplateData = {
   order_received: OrderReceivedData;
   staff_new_order: StaffNewOrderData;
   proof_received: ProofReceivedData;
   staff_proof_received: StaffProofReceivedData;
   order_links: OrderLinksData;
+  order_confirmed: OrderConfirmedData;
+  proof_rejected: ProofRejectedData;
+  total_ready: TotalReadyData;
+  date_changed: DateChangedData;
+  order_cancelled: OrderCancelledData;
+  order_ready: OrderReadyData;
+};
+
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
 };
 
 export type TemplateName = keyof TemplateData;
@@ -73,6 +124,7 @@ export type EmailProvider = {
     subject: string;
     html: string;
     replyTo?: string;
+    attachments?: EmailAttachment[];
   }): Promise<{ id: string }>;
 };
 
