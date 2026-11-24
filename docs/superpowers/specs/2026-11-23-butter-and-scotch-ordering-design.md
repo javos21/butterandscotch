@@ -290,3 +290,11 @@ It runs on the adapted codebase and local Supabase. It exists to check the flow 
 - Brevo: whether she has an account and a sending domain. If not, set one up, or use Monday Wear's console sender until then.
 - The domain name.
 - Item photos.
+
+## Admin decisions (2026-11-24, plan 2)
+
+- **Look:** a plain, neutral tool: white/zinc surfaces, Inter, light only, with the **brand red** (`#8B1E1E`) as the only accent (primary buttons, active nav, focus ring). No cream or serif in admin. Guided by the `ui-ux-pro-max` rules: 44 px touch targets, icon + label navigation, one primary action per screen, destructive actions in red and confirmed, errors next to fields, toast feedback, no emoji as icons.
+- **Navigation:** bottom tab bar on phones (Today, Orders, Payments, Settings, with a count badge on Payments); sidebar from 1024 px.
+- **Split:** plan **2a** = Today, Orders list/detail (proof confirm/reject with PDF receipt, set delivery fee, change date, mark ready/completed, cancel, WhatsApp), Payments queue, Settings (store switch, lead time, cap, blocked dates, delivery areas, bank details, pickup info, policy text, WhatsApp number, notify email). Plan **2b** = Menu editing, Adjust total, refunds, notes, history view polish, CSV exports.
+- **Carried from plan 1:** staff date changes go through a locked database function (blocked dates always enforced, cap can be overridden); `proof_submitted` orders with no submitted payment appear in the Payments queue; the admin sign-in e2e test asserts the real landing page.
+- **Receipt PDF:** logo, "Receipt", order number, customer name, date paid, pickup/delivery date, items (name, flavour, quantity, unit price, line total), delivery fee, adjustments before payment, total marked "Paid in full — bank transfer", and the WhatsApp contact line. Also downloadable from the confirmed order page and from admin.
