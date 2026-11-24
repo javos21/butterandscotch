@@ -1,25 +1,39 @@
 import type { ReactNode } from "react";
+import { LogOut } from "lucide-react";
+import { signOut } from "@/app/admin/login/actions";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { Separator } from "@/components/ui/separator";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminTabBar } from "@/components/admin/AdminTabBar";
+import { Button } from "@/components/ui/button";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { getAdminCounts } from "@/lib/admin/counts";
 import { requireStaff } from "@/lib/auth/require-staff";
 
 export default async function ProtectedAdminLayout({ children }: { children: ReactNode }) {
   const staff = await requireStaff();
+  const counts = await getAdminCounts();
 
   return (
     <SidebarProvider>
-      <AdminSidebar staffName={staff.name} />
+      {/* The sidebar is shown from lg (1024 px) up; below that the tab bar takes over. */}
+      <div className="hidden lg:block">
+        <AdminSidebar staffName={staff.name} proofsToCheck={counts.proofsToCheck} />
+      </div>
       {/* min-w-0 keeps wide children (tables) scrolling inside their own boxes. */}
       <SidebarInset className="min-w-0">
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 lg:hidden">
+          <span className="text-sm font-semibold">Butter &amp; Scotch Admin</span>
+          <form action={signOut}>
+            <Button type="submit" variant="ghost" className="min-h-11 gap-2 px-3">
+              <LogOut className="size-4" aria-hidden="true" />
+              Sign out
+            </Button>
+          </form>
         </header>
-        <main id="main" className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
+        <main id="main" className="mx-auto w-full max-w-7xl flex-1 p-4 pb-24 md:p-6 md:pb-24 lg:pb-6">
           {children}
         </main>
       </SidebarInset>
+      <AdminTabBar proofsToCheck={counts.proofsToCheck} />
     </SidebarProvider>
   );
 }
