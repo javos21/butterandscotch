@@ -150,7 +150,7 @@ export function FlavourSheet({
           >
             <ShoppingBasket className="size-5 shrink-0" aria-hidden="true" />
             {room > 0
-              ? `Add to basket · ${formatMoney(item.price_cents * quantity).replace(".00", "")}`
+              ? `Add to basket · $${formatMoney(item.price_cents * quantity).replace(".00", "")} TTD`
               : "Most per order in basket"}
           </button>
         </div>

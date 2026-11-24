@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ExternalLink } from "lucide-react";
+import { DeleteProductButton } from "@/components/admin/DeleteProductButton";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { ProductPhotoUploader } from "@/components/admin/ProductPhotoUploader";
 import { loadProductAdmin } from "@/lib/admin/products-repo";
@@ -40,6 +41,9 @@ export default async function AdminMenuItemPage({ params }: PageProps<"/admin/me
       </div>
       <ProductPhotoUploader id={item.id} name={item.name} imageUrl={item.image_url} />
       <ProductForm key={item.id} item={item} sections={sections} />
+      <div className="flex justify-end">
+        <DeleteProductButton id={item.id} name={item.name} />
+      </div>
     </div>
   );
 }

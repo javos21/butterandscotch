@@ -8,6 +8,7 @@ import {
   parseProduct,
   placeholderImage,
   saveProduct,
+  deleteProduct,
   setProductFlags,
   uploadProductPhoto,
   type ProductInput,
@@ -52,6 +53,12 @@ function makeRepo(rows: Row[] = []) {
       const row = state.rows.find((r) => r.id === id);
       if (!row) return false;
       Object.assign(row, values);
+      return true;
+    },
+    async delete(id) {
+      const index = state.rows.findIndex((r) => r.id === id);
+      if (index < 0) return false;
+      state.rows.splice(index, 1);
       return true;
     },
     async setFlags(id, flags) {
@@ -263,5 +270,23 @@ describe("uploadProductPhoto", () => {
       { repo, storage: store, resize: async () => Buffer.from("webp"), now },
     );
     expect(result).toEqual({ ok: true, id: ITEM });
+  });
+});
+
+describe("deleteProduct", () => {
+  test("removes the item and its photo", async () => {
+    const { repo, state } = makeRepo([existing()]);
+    const removed: string[] = [];
+    const result = await deleteProduct({ id: ITEM }, { repo, storage: { remove: async (url) => void removed.push(url) } });
+    expect(result).toEqual({ ok: true, id: ITEM });
+    expect(state.rows).toHaveLength(0);
+    expect(removed).toEqual(["https://photos.example.test/items/old.webp"]);
+  });
+
+  test("an unknown item says so and removes nothing", async () => {
+    const { repo } = makeRepo([]);
+    await expect(deleteProduct({ id: ITEM }, { repo, storage: { remove: async () => {} } })).resolves.toEqual({
+      error: NOT_FOUND,
+    });
   });
 });

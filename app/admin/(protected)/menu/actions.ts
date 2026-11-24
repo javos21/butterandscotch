@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  deleteProduct,
   saveProduct,
   setProductFlags,
   uploadProductPhoto,
@@ -48,6 +49,14 @@ export async function uploadProductPhotoAction(formData: FormData): Promise<Prod
     { id, file: { name: photo.name, type: photo.type, size: photo.size, bytes: await photo.arrayBuffer() } },
     { repo: productsRepo(), storage: photoStorage(), resize: resizePhoto, now: () => new Date() },
   );
+  refreshSite();
+  return result;
+}
+
+/** Deletes a menu item for good. Used by the Delete item button, after confirmation. */
+export async function deleteProductAction(input: { id: string }): Promise<ProductResult> {
+  await requireStaff();
+  const result = await deleteProduct(input, { repo: productsRepo(), storage: photoStorage() });
   refreshSite();
   return result;
 }

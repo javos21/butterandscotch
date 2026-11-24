@@ -54,6 +54,8 @@ export type ProductRepo = {
   /** False when no item has this id. */
   update(id: string, values: ProductValues): Promise<boolean>;
   /** False when no item has this id. */
+  delete(id: string): Promise<boolean>;
+  /** False when no item has this id. */
   setFlags(id: string, flags: ProductFlags): Promise<boolean>;
   /** Null when no item has this id. */
   getImage(id: string): Promise<{ imageUrl: string | null } | null>;
@@ -197,6 +199,28 @@ export async function uploadProductPhoto(
       await deps.storage.remove(current.imageUrl);
     } catch (error) {
       console.error("[products] failed to remove the replaced photo", error);
+    }
+  }
+  return { ok: true, id: input.id };
+}
+
+/**
+ * Deletes a menu item and its photo. Past orders keep their own copy of the item's name and price, so
+ * their records do not change. The photo is removed only after the item is gone.
+ */
+export async function deleteProduct(
+  input: { id: string },
+  deps: { repo: ProductRepo; storage: { remove(url: string): Promise<void> } },
+): Promise<ProductResult> {
+  const current = await deps.repo.getImage(input.id);
+  if (!current) return { error: NOT_FOUND };
+  const removed = await deps.repo.delete(input.id);
+  if (!removed) return { error: NOT_FOUND };
+  if (current.imageUrl) {
+    try {
+      await deps.storage.remove(current.imageUrl);
+    } catch (error) {
+      console.error("[products] failed to remove the deleted item's photo", error);
     }
   }
   return { ok: true, id: input.id };

@@ -41,6 +41,12 @@ export function productsRepo(): ProductRepo {
       return (data ?? []).length === 1;
     },
 
+    async delete(id) {
+      const { data, error } = await db.from("items").delete().eq("id", id).select("id");
+      if (error) throw new Error(error.message);
+      return (data ?? []).length === 1;
+    },
+
     async setFlags(id, flags) {
       const { data, error } = await db.from("items").update(flags).eq("id", id).select("id");
       if (error) throw new Error(error.message);
