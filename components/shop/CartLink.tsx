@@ -13,7 +13,7 @@ export function CartLink() {
       className="flex min-h-11 min-w-11 flex-col items-center justify-center rounded-xl px-1 text-crimson-deep hover:bg-cream-warm"
     >
       <ShoppingBasket className="size-7" strokeWidth={1.75} aria-hidden="true" />
-      <span className="text-sm font-bold leading-tight">Basket {count}</span>
+      <span key={count} className="animate-basket-pop text-sm font-bold leading-tight">Basket {count}</span>
     </Link>
   );
 }

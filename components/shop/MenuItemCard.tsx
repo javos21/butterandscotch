@@ -1,24 +1,30 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
+import { ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
-import { ItemPhoto } from "@/components/shop/ItemPhoto";
 import { useCart } from "@/components/shop/CartProvider";
+import { FlavourSheet } from "@/components/shop/FlavourSheet";
+import { ItemPhoto } from "@/components/shop/ItemPhoto";
+import { PriceTag } from "@/components/shop/PriceTag";
 import { roomFor } from "@/lib/cart";
-import { priceLabel } from "@/lib/price-label";
 import type { Item } from "@/lib/types";
 
 /**
- * One menu card (DESIGN.md "Product card"): photo, name, price, allergen line and Add.
- * Items with flavours open their page to choose one; the rest add one straight to the basket.
+ * One menu card: photo, name, allergen note, price and Add to basket. Items with flavours open a
+ * flavour sheet; the rest add one straight to the basket.
  */
 export function MenuItemCard({ item, priority }: { item: Item; priority?: boolean }) {
   const { lines, add } = useCart();
+  const [sheetOpen, setSheetOpen] = useState(false);
   const hasFlavours = item.flavours.length > 0;
   const room = roomFor(lines, item.id, item.max_qty);
-  const href = `/items/${item.id}`;
 
   function onAdd() {
+    if (hasFlavours) {
+      setSheetOpen(true);
+      return;
+    }
     if (room <= 0) return;
     add({
       itemId: item.id,
@@ -33,17 +39,15 @@ export function MenuItemCard({ item, priority }: { item: Item; priority?: boolea
   }
 
   return (
-    <article className="flex h-full flex-col rounded-[22px] border border-olive-line bg-card-cream p-2.5 pb-3.5">
-      <Link href={href} className="block rounded-2xl" tabIndex={-1} aria-hidden="true">
-        <ItemPhoto
-          src={item.image_url}
-          name={item.name}
-          sizes="(min-width: 1200px) 25vw, (min-width: 768px) 33vw, 50vw"
-          priority={priority}
-          className="aspect-[4/3]"
-        />
-      </Link>
-      {/* Fixed slots: every card reserves the same height for its tag, name, price and note, so the
+    <article className="flex h-full flex-col rounded-[22px] border border-olive-line bg-card-cream p-2.5 pb-3.5 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(86,0,8,0.10)]">
+      <ItemPhoto
+        src={item.image_url}
+        name={item.name}
+        sizes="(min-width: 1200px) 25vw, (min-width: 768px) 33vw, 50vw"
+        priority={priority}
+        className="aspect-[4/3]"
+      />
+      {/* Fixed slots: every card reserves the same height for its tag, name, note and price, so the
           Add buttons line up across a row whether or not an item is seasonal or has an allergen note. */}
       <div className="flex flex-1 flex-col px-1.5 pt-3">
         <div className="flex h-7 items-start">
@@ -54,39 +58,29 @@ export function MenuItemCard({ item, priority }: { item: Item; priority?: boolea
           ) : null}
         </div>
         <h3 className="min-h-[2.25rem] font-display text-[1.2rem] leading-[1.12] text-crimson-deep sm:min-h-[2.5rem] sm:text-[1.375rem]">
-          <Link href={href} className="hover:underline hover:decoration-1 hover:underline-offset-4">
-            {item.name}
-          </Link>
+          {item.name}
         </h3>
-        <p className="mt-1 min-h-[3rem] text-lg font-extrabold leading-tight text-olive-ink sm:min-h-[1.75rem] sm:text-xl">
-          {priceLabel(item)}
-        </p>
-        <p className="min-h-[1.5rem] text-[0.9375rem] text-olive">{item.allergen_note ?? ""}</p>
+        <p className="mt-1 min-h-[1.5rem] text-[0.9375rem] text-olive">{item.allergen_note ?? ""}</p>
+        <PriceTag item={item} className="mt-2 min-h-[4.25rem] sm:min-h-[4rem]" />
       </div>
       <div className="px-0.5 pt-3">
         {room <= 0 ? (
           <p className="flex min-h-12 items-center justify-center rounded-[14px] bg-cream-warm px-2 text-center text-sm font-bold text-olive-ink">
             Most per order ({item.max_qty}) in basket
           </p>
-        ) : hasFlavours ? (
-          <Link
-            href={href}
-            className="flex min-h-12 items-center justify-center rounded-[14px] bg-crimson px-3 text-base font-bold text-cream transition-colors hover:bg-crimson-deep active:scale-[0.98]"
-            aria-label={`Choose a flavour for ${item.name}`}
-          >
-            Add
-          </Link>
         ) : (
           <button
             type="button"
             onClick={onAdd}
-            className="flex min-h-12 w-full items-center justify-center rounded-[14px] bg-crimson px-3 text-base font-bold text-cream transition-colors hover:bg-crimson-deep active:scale-[0.98]"
             aria-label={`Add ${item.name} to basket`}
+            className="flex min-h-12 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-[14px] bg-crimson px-2 text-[0.8125rem] font-bold text-cream shadow-[0_4px_12px_rgba(86,0,8,0.16)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-crimson-deep hover:shadow-[0_8px_18px_rgba(86,0,8,0.22)] active:translate-y-0 active:scale-[0.97] min-[400px]:text-sm sm:px-3 sm:text-base"
           >
-            Add
+            <ShoppingBasket className="size-5 shrink-0" aria-hidden="true" />
+            Add to basket
           </button>
         )}
       </div>
+      {hasFlavours ? <FlavourSheet item={item} open={sheetOpen} onOpenChange={setSheetOpen} /> : null}
     </article>
   );
 }

@@ -26,11 +26,11 @@ export default async function AdminMenuItemPage({ params }: PageProps<"/admin/me
           <h1 className="text-xl font-semibold">{item.name}</h1>
           {item.active ? (
             <Link
-              href={`/items/${item.id}`}
+              href="/#menu"
               target="_blank"
               className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline hover:underline-offset-4"
             >
-              View on the shop
+              View the menu on the shop
               <ExternalLink className="size-4" aria-hidden="true" />
             </Link>
           ) : (

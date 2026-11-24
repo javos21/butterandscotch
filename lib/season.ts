@@ -5,11 +5,9 @@
 export const SEASON = {
   festive: true,
   heroTitle: "Christmas bakes, made to share.",
-  heroCta: "Order Christmas menu",
   heroImage: { src: "/items/orange-almond-cake.webp", alt: "Orange almond cake topped with flaked almonds, beside dried orange slices", width: 1200, height: 802 },
 } as const;
 
 export const YEAR_ROUND = {
   heroTitle: "Home bakes, made to order.",
-  heroCta: "See the menu",
 } as const;

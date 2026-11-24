@@ -76,19 +76,12 @@ test("other area waits for a quote", async ({ page }) => {
 });
 
 test("item limit across flavours", async ({ page }) => {
-  await page.goto("/");
   await addToCart(page, "Cookie Jar", { flavour: "Coconut Butterscotch", quantity: 2 });
 
-  // Still on the jar page: a second flavour cannot be added past the per-order limit of 2.
-  await page.locator("label").filter({ hasText: "Half & Half" }).click();
-    await expect(page.getByRole("radio", { name: "Half & Half", exact: true })).toBeChecked();
-  await expect(page.getByRole("button", { name: "Increase quantity" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Most per order in basket" })).toBeDisabled();
-  await expect(page.getByRole("group", { name: "Quantity of Cookie Jar" }).getByText("0", { exact: true })).toBeVisible();
-
-  // The menu card says the same.
-  await page.goto("/");
-  await expect(menuCard(page, "Cookie Jar").getByText("Most per order (2) in basket")).toBeVisible();
+  // The basket is full for this item: the card says so and offers no Add button.
+  const jar = menuCard(page, "Cookie Jar");
+  await expect(jar.getByText("Most per order (2) in basket")).toBeVisible();
+  await expect(jar.getByRole("button", { name: "Add Cookie Jar to basket" })).toHaveCount(0);
 });
 
 test.describe("no horizontal scroll at 375px", () => {

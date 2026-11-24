@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowRight, CalendarDays, Landmark, ReceiptText, ShoppingBasket, CalendarCheck } from "lucide-react";
+import { CalendarDays, Landmark, ReceiptText, ShoppingBasket, CalendarCheck } from "lucide-react";
 import { HollyDivider } from "@/components/shop/HollyDivider";
 import { MenuItemCard } from "@/components/shop/MenuItemCard";
 import { getMenu } from "@/lib/data/menu";
@@ -40,15 +40,7 @@ export default async function MenuPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4">
-        {settings.store_open ? (
-          <a
-            href="#menu"
-            className="mx-auto -mt-7 relative flex min-h-14 max-w-xl items-center justify-center gap-3 rounded-2xl bg-crimson px-6 text-lg font-bold text-cream shadow-[0_10px_30px_rgba(86,0,8,0.18)] transition-colors hover:bg-crimson-deep active:scale-[0.99] sm:text-xl"
-          >
-            {copy.heroCta}
-            <ArrowRight className="size-6" aria-hidden="true" />
-          </a>
-        ) : (
+        {settings.store_open ? null : (
           <p className="mx-auto -mt-7 relative max-w-xl rounded-2xl bg-card-cream px-6 py-4 text-center text-lg font-bold text-olive-ink ring-1 ring-olive-line">
             We&rsquo;re not taking orders right now. Check back soon.
           </p>
@@ -65,7 +57,6 @@ export default async function MenuPage() {
             Bank transfer
           </span>
         </div>
-        <p className="mt-2 text-center text-sm text-olive">All prices are in TTD.</p>
       </div>
 
       {settings.store_open ? (
