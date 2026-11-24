@@ -196,10 +196,9 @@ export async function changeDate(input: ChangeDateInput, deps: OrderActionDeps):
   try {
     await deps.repo.changeFulfilDate(order.id, newDate, overrideCap);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    for (const [code, text] of Object.entries(DATE_RPC_ERRORS)) {
-      if (message.includes(code)) return { error: text };
-    }
+    const message = err instanceof Error ? err.message.trim() : String(err).trim();
+    const mapped = DATE_RPC_ERRORS[message];
+    if (mapped) return { error: mapped };
     console.error("[order-actions] date change failed", order.id, err);
     return { error: SAVE_ERROR };
   }
