@@ -25,9 +25,9 @@ test("staff can sign in and land on the orders shell", async ({ page }) => {
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { name: "Today" })).toBeVisible();
 
-  // Tab bar on phones, sidebar on desktop: whichever is visible shows the four sections.
+  // Tab bar on phones, sidebar on desktop: whichever is visible shows the five sections.
   const nav = page.getByRole("navigation", { name: "Admin" }).filter({ visible: true });
-  for (const label of ["Today", "Orders", "Payments", "Settings"]) {
+  for (const label of ["Today", "Orders", "Payments", "Menu", "Settings"]) {
     await expect(nav.getByText(label, { exact: true })).toBeVisible();
   }
 });

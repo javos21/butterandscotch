@@ -204,7 +204,7 @@ test.describe("admin pages fit 375px", () => {
     await signInAsStaff(admin);
     const orderId = await openAdminOrder(admin, order.orderNumber);
 
-    const paths = ["/admin", "/admin/orders", `/admin/orders/${orderId}`, "/admin/payments", "/admin/settings"];
+    const paths = ["/admin", "/admin/orders", `/admin/orders/${orderId}`, "/admin/payments", "/admin/menu", "/admin/settings"];
     for (const path of paths) {
       await admin.goto(path);
       await expect(admin.getByRole("heading", { level: 1 })).toBeVisible();

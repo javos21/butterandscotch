@@ -14,7 +14,7 @@ export function AdminTabBar({ proofsToCheck }: { proofsToCheck: number }) {
       aria-label="Admin"
       className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {ADMIN_NAV.map((item) => {
           const active = isActive(pathname, item.href);
           const badge = item.label === "Payments" ? proofsToCheck : 0;

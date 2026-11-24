@@ -29,7 +29,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
             </Button>
           </form>
         </header>
-        <main id="main" className="mx-auto w-full max-w-7xl flex-1 p-4 pb-24 md:p-6 md:pb-24 lg:pb-6">
+        <main id="main" className="mx-auto w-full max-w-7xl flex-1 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-6">
           {children}
         </main>
       </SidebarInset>

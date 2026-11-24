@@ -9,7 +9,7 @@ type RemotePattern = {
   pathname: string;
 };
 
-/** Image hosts: the placeholder service for seed images, and this project's Supabase storage. */
+/** Image hosts: the placeholder service, this project's Supabase storage, and the R2 photo bucket. */
 function imageRemotePatterns(): RemotePattern[] {
   const patterns: RemotePattern[] = [
     { protocol: "https", hostname: "placehold.co", pathname: "/**" },
@@ -23,6 +23,18 @@ function imageRemotePatterns(): RemotePattern[] {
       hostname,
       ...(port ? { port } : {}),
       pathname: STORAGE_PATH,
+    });
+  }
+
+  // Menu photos uploaded from the admin are served from the R2 bucket's public URL.
+  const r2PublicUrl = process.env.R2_PUBLIC_URL;
+  if (r2PublicUrl) {
+    const { protocol, hostname, port } = new URL(r2PublicUrl);
+    patterns.push({
+      protocol: protocol === "https:" ? "https" : "http",
+      hostname,
+      ...(port ? { port } : {}),
+      pathname: "/**",
     });
   }
 
