@@ -32,25 +32,26 @@ export function FlavourSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const { lines, add } = useCart();
+  const hasFlavours = item.flavours.length > 0;
   const [flavour, setFlavour] = useState<string>(item.flavours[0] ?? "");
   const [requested, setRequested] = useState(1);
 
   const room = roomFor(lines, item.id, item.max_qty);
   const quantity = Math.max(0, Math.min(requested, room));
-  const canAdd = room > 0 && quantity > 0 && flavour !== "";
+  const canAdd = room > 0 && quantity > 0 && (!hasFlavours || flavour !== "");
 
   function onAdd() {
     if (!canAdd) return;
     add({
       itemId: item.id,
       name: item.name,
-      flavour,
+      flavour: hasFlavours ? flavour : null,
       unitLabel: item.unit_label,
       unitPriceCents: item.price_cents,
       quantity,
       maxQty: item.max_qty,
     });
-    toast(`Added ${item.name} (${flavour}) to your basket`);
+    toast(hasFlavours ? `Added ${item.name} (${flavour}) to your basket` : `Added ${item.name} to your basket`);
     setRequested(1);
     onOpenChange(false);
   }
@@ -64,10 +65,11 @@ export function FlavourSheet({
         <SheetHeader className="p-0 text-left">
           <SheetTitle className="font-display text-3xl font-normal text-oxblood">{item.name}</SheetTitle>
           <SheetDescription className="text-base text-olive-ink">
-            Choose a flavour, then add it to your basket.
+            {hasFlavours ? "Choose a flavour and how many, then add it to your basket." : "Choose how many, then add it to your basket."}
           </SheetDescription>
         </SheetHeader>
 
+        {hasFlavours ? (
         <fieldset className="mt-6 space-y-3">
           <legend className="sr-only">Flavour</legend>
           {item.flavours.map((option) => {
@@ -107,6 +109,7 @@ export function FlavourSheet({
             );
           })}
         </fieldset>
+        ) : null}
 
         <div className="mt-6 flex gap-3">
           <div

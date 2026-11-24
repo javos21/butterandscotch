@@ -44,20 +44,15 @@ export async function waitForHydration(page: Page) {
 export async function addToCart(page: Page, name: string, options: { flavour?: string; quantity?: number } = {}) {
   if (new URL(page.url()).pathname !== "/") await page.goto("/");
   await waitForHydration(page);
-  const card = menuCard(page, name);
+  await menuCard(page, name).getByRole("button", { name: `Add ${name} to basket` }).click();
+  const sheet = page.getByRole("dialog");
   if (options.flavour) {
-    await card.getByRole("button", { name: `Add ${name} to basket` }).click();
-    const sheet = page.getByRole("dialog");
     await sheet.locator("label").filter({ hasText: options.flavour }).click();
-    for (let i = 1; i < (options.quantity ?? 1); i++) {
-      await sheet.getByRole("button", { name: "Increase quantity" }).click();
-    }
-    await sheet.getByRole("button", { name: /^Add to basket/ }).click();
-  } else {
-    for (let i = 0; i < (options.quantity ?? 1); i++) {
-      await card.getByRole("button", { name: `Add ${name} to basket` }).click();
-    }
   }
+  for (let i = 1; i < (options.quantity ?? 1); i++) {
+    await sheet.getByRole("button", { name: "Increase quantity" }).click();
+  }
+  await sheet.getByRole("button", { name: /^Add to basket/ }).click();
   await expect(page.getByText(new RegExp(`^Added ${name}`)).first()).toBeVisible();
 }
 

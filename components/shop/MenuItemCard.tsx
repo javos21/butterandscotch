@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ShoppingBasket } from "lucide-react";
-import { toast } from "sonner";
 import { useCart } from "@/components/shop/CartProvider";
 import { FlavourSheet } from "@/components/shop/FlavourSheet";
 import { ItemPhoto } from "@/components/shop/ItemPhoto";
@@ -11,31 +10,17 @@ import { roomFor } from "@/lib/cart";
 import type { Item } from "@/lib/types";
 
 /**
- * One menu card: photo, name, allergen note, price and Add to basket. Items with flavours open a
- * flavour sheet; the rest add one straight to the basket.
+ * One menu card: photo, name, allergen note, price and Add to basket. Every item opens the same sheet,
+ * where flavour (if any) and quantity are chosen.
  */
 export function MenuItemCard({ item, priority }: { item: Item; priority?: boolean }) {
-  const { lines, add } = useCart();
+  const { lines } = useCart();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const hasFlavours = item.flavours.length > 0;
   const room = roomFor(lines, item.id, item.max_qty);
 
   function onAdd() {
-    if (hasFlavours) {
-      setSheetOpen(true);
-      return;
-    }
     if (room <= 0) return;
-    add({
-      itemId: item.id,
-      name: item.name,
-      flavour: null,
-      unitLabel: item.unit_label,
-      unitPriceCents: item.price_cents,
-      quantity: 1,
-      maxQty: item.max_qty,
-    });
-    toast(`Added ${item.name} to your basket`);
+    setSheetOpen(true);
   }
 
   return (
@@ -80,7 +65,7 @@ export function MenuItemCard({ item, priority }: { item: Item; priority?: boolea
           </button>
         )}
       </div>
-      {hasFlavours ? <FlavourSheet item={item} open={sheetOpen} onOpenChange={setSheetOpen} /> : null}
+      <FlavourSheet item={item} open={sheetOpen} onOpenChange={setSheetOpen} />
     </article>
   );
 }
