@@ -37,14 +37,18 @@ const styles = StyleSheet.create({
 });
 
 /** The customer receipt: logo, order details, items, totals and a WhatsApp contact line. */
-export function ReceiptDocument({ data, logo }: { data: ReceiptData; logo: Buffer }) {
+export function ReceiptDocument({ data, logo }: { data: ReceiptData; logo: Buffer | null }) {
   const isDelivery = data.fulfilment === "delivery";
   return (
     <Document title={`Receipt ${data.orderNumber}`} author="Butter & Scotch">
       <Page size="A5" style={styles.page}>
         <View style={styles.header}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf images take no alt text */}
-          <Image src={logo} style={styles.logo} />
+          {logo ? (
+            /* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf images take no alt text */
+            <Image src={logo} style={styles.logo} />
+          ) : (
+            <View />
+          )}
           <View style={{ alignItems: "flex-end" }}>
             <Text style={styles.title}>Receipt</Text>
             <Text style={styles.orderNumber}>Order {data.orderNumber}</Text>

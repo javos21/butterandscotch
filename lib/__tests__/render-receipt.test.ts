@@ -30,6 +30,14 @@ describe("renderReceiptPdf", () => {
   }, 30_000);
 });
 
+describe("renderReceiptPdf without the logo", () => {
+  test("still returns a PDF when the logo path is missing", async () => {
+    const pdf = await renderReceiptPdf(data, "/nonexistent/path/logo-red.png");
+    expect(pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(pdf.length).toBeGreaterThan(1000);
+  }, 30_000);
+});
+
 describe("receiptFilename", () => {
   test("names the receipt after the order number", () => {
     expect(receiptFilename("BS-0142")).toBe("Butter-and-Scotch-receipt-BS-0142.pdf");

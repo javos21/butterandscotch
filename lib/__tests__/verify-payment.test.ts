@@ -262,6 +262,22 @@ describe("verifyPayment", () => {
     expect(mail.sent).toHaveLength(0);
   });
 
+  test("order write throws → payment restored, no email", async () => {
+    const { state, mail, deps, shown } = setup({
+      raceBeforeMove: () => {
+        throw new Error("connection reset");
+      },
+    });
+
+    const result = await verifyPayment({ paymentId: PAYMENT_ID, decision: "confirm", shown }, deps);
+
+    expect(result).toEqual({ error: REFRESH_ERROR });
+    expect(state.payment.status).toBe("submitted");
+    expect(state.reviewedBy).toBeNull();
+    expect(state.order.status).toBe("proof_submitted");
+    expect(mail.sent).toHaveLength(0);
+  });
+
   test("pdf failure still confirms", async () => {
     const { state, mail, deps, shown } = setup(
       {},

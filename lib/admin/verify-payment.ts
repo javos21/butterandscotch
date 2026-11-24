@@ -159,7 +159,13 @@ export async function verifyPayment(
   );
   if (!marked) return { error: await missReason(repo, payment.id) };
 
-  const moved = await repo.moveOrder(order.id, order.status, next, confirmed ? null : reviewedAt);
+  let moved: boolean;
+  try {
+    moved = await repo.moveOrder(order.id, order.status, next, confirmed ? null : reviewedAt);
+  } catch (err) {
+    console.error("[verify-payment] order write threw", order.id, err);
+    moved = false;
+  }
   if (!moved) {
     await revertPayment(repo, payment, outcome);
     return { error: REFRESH_ERROR };
