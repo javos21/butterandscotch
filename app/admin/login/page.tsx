@@ -1,7 +1,8 @@
+import Image from "next/image";
 import { AlertCircleIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "./actions";
@@ -23,13 +24,15 @@ export default async function AdminLoginPage({
     <main className="flex min-h-svh items-center justify-center bg-muted px-4 py-12">
       <Card className="w-full max-w-sm">
         <CardHeader className="justify-items-center text-center">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary font-semibold text-primary-foreground">
-            B
-          </div>
-          <CardTitle className="mt-2 text-xl">
-            <h1>Sign in</h1>
-          </CardTitle>
-          <CardDescription>Butter &amp; Scotch admin</CardDescription>
+          <Image
+            src="/brand/logo-red-wide.png"
+            alt="Butter and Scotch"
+            width={471}
+            height={238}
+            className="h-12 w-auto"
+            priority
+          />
+          <h1 className="sr-only">Sign in</h1>
         </CardHeader>
         <CardContent>
           <form action={signIn} className="space-y-5">
@@ -60,6 +63,12 @@ export default async function AdminLoginPage({
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="justify-center">
+          <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            Powered by
+            <Image src="/brand/chaconia-labs.png" alt="Chaconia Labs" width={360} height={98} className="h-6 w-auto" />
+          </p>
+        </CardFooter>
       </Card>
     </main>
   );

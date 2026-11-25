@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -21,7 +22,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
       {/* min-w-0 keeps wide children (tables) scrolling inside their own boxes. */}
       <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 lg:hidden">
-          <span className="text-sm font-semibold">Butter &amp; Scotch Admin</span>
+          <Image src="/brand/logo-red-wide.png" alt="Butter and Scotch admin" width={471} height={238} className="h-8 w-auto" />
           <form action={signOut}>
             <Button type="submit" variant="ghost" className="min-h-11 gap-2 px-3">
               <LogOut className="size-4" aria-hidden="true" />

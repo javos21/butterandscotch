@@ -3,7 +3,7 @@ import { ADMIN_NAV, isActive } from "@/components/admin/nav-items";
 
 describe("ADMIN_NAV", () => {
   test("has exactly the four staff sections in order", () => {
-    expect(ADMIN_NAV.map((n) => n.label)).toEqual(["Today", "Orders", "Payments", "Menu", "Settings"]);
+    expect(ADMIN_NAV.map((n) => n.label)).toEqual(["Home", "Orders", "Payments", "Menu", "Settings"]);
   });
 
   test("hrefs match the admin routes", () => {
