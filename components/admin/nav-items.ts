@@ -1,12 +1,12 @@
 import { ClipboardList, CreditCard, House, type LucideIcon, Settings, UtensilsCrossed } from "lucide-react";
 
-export type AdminNavLabel = "Today" | "Orders" | "Payments" | "Menu" | "Settings";
+export type AdminNavLabel = "Home" | "Orders" | "Payments" | "Menu" | "Settings";
 
 export type AdminNavItem = { href: string; label: AdminNavLabel; icon: LucideIcon };
 
 /** The five staff sections, shared by the phone tab bar and the desktop sidebar. */
 export const ADMIN_NAV: AdminNavItem[] = [
-  { href: "/admin", label: "Today", icon: House },
+  { href: "/admin", label: "Home", icon: House },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },

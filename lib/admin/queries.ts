@@ -1,7 +1,6 @@
 import "server-only";
-import { buildBakingDays, type BakingDay, type BoardOrder } from "@/lib/admin/baking-list";
 import { getAdminCounts } from "@/lib/admin/counts";
-import { addDays } from "@/lib/dates";
+import { lastDayOfMonth } from "@/lib/admin/home-calendar";
 import type { OrderStatus } from "@/lib/order-status";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -11,7 +10,6 @@ import { createAdminSupabase } from "@/lib/supabase/admin";
 
 const PAGE_SIZE = 25;
 const RECEIPT_URL_SECONDS = 600;
-const BOARD_DAYS = 7;
 
 /** Escapes LIKE wildcards so the search term matches literally in ilike. */
 function escapeLike(value: string): string {
@@ -68,51 +66,98 @@ async function signedReceiptUrls(paths: string[]): Promise<Map<string, string>> 
   return urls;
 }
 
-// Today board ---------------------------------------------------------------
+// Home ----------------------------------------------------------------------
 
-export type TodayBoard = {
-  days: BakingDay[];
+export type HomeTiles = {
+  /** Proofs waiting for staff to check. */
   proofsToCheck: number;
+  /** "Other area" orders waiting for a delivery fee. */
   quotesToSet: number;
+  /** Orders baked and ready, waiting to be marked complete. */
+  readyToComplete: number;
+  /** Live orders due today. */
+  ordersToday: number;
 };
 
-/** Baking list for `today` and the six days after it, plus the badge counts. */
-export async function getTodayBoard(today: string): Promise<TodayBoard> {
+export type HomeOrder = {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  status: OrderStatus;
+  fulfilment: "pickup" | "delivery";
+  items: { name: string; flavour: string | null; quantity: number; unitLabel: string }[];
+};
+
+export type HomeData = {
+  tiles: HomeTiles;
+  /** Live orders per fulfil date, keyed "YYYY-MM-DD", for the shown month. */
+  countsByDate: Record<string, number>;
+  /** Orders for `selectedDate`, oldest order number first. Empty when no date is selected. */
+  dayOrders: HomeOrder[];
+};
+
+/**
+ * Everything the Home page shows: the four tiles, the day counts for one month and the orders
+ * for one selected day. Cancelled orders are left out of every count and list.
+ */
+export async function getHomeData(
+  today: string,
+  monthStart: string,
+  selectedDate: string | null,
+): Promise<HomeData> {
   const db = createAdminSupabase();
-  const [orders, counts] = await Promise.all([
+  const [counts, ready, dueToday, month] = await Promise.all([
+    getAdminCounts(),
+    db.from("orders").select("id", { count: "exact", head: true }).eq("status", "ready"),
+    db
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("fulfil_date", today)
+      .neq("status", "cancelled"),
     db
       .from("orders")
       .select(
-        "id, order_number, customer_name, status, fulfil_date, fulfilment, order_items(item_name, flavour, unit_label, quantity, items(allergen_note))",
+        "id, order_number, customer_name, status, fulfil_date, fulfilment, order_items(item_name, flavour, quantity, unit_label)",
       )
-      .gte("fulfil_date", today)
-      .lte("fulfil_date", addDays(today, BOARD_DAYS - 1))
+      .gte("fulfil_date", monthStart)
+      .lte("fulfil_date", lastDayOfMonth(monthStart))
       .neq("status", "cancelled")
-      .order("fulfil_date", { ascending: true }),
-    getAdminCounts(),
+      .order("order_number", { ascending: true }),
   ]);
-  if (orders.error) throw new Error(orders.error.message);
+  if (ready.error) throw new Error(ready.error.message);
+  if (dueToday.error) throw new Error(dueToday.error.message);
+  if (month.error) throw new Error(month.error.message);
 
-  const boardOrders: BoardOrder[] = orders.data.map((row) => ({
-    id: row.id,
-    orderNumber: row.order_number,
-    customerName: row.customer_name,
-    status: row.status as OrderStatus,
-    fulfilDate: row.fulfil_date,
-    fulfilment: row.fulfilment as "pickup" | "delivery",
-    items: row.order_items.map((item) => ({
-      name: item.item_name,
-      flavour: item.flavour,
-      quantity: item.quantity,
-      unitLabel: item.unit_label,
-      nuts: item.items?.allergen_note != null,
-    })),
-  }));
+  const countsByDate: Record<string, number> = {};
+  const dayOrders: HomeOrder[] = [];
+  for (const row of month.data) {
+    countsByDate[row.fulfil_date] = (countsByDate[row.fulfil_date] ?? 0) + 1;
+    if (row.fulfil_date === selectedDate) {
+      dayOrders.push({
+        id: row.id,
+        orderNumber: row.order_number,
+        customerName: row.customer_name,
+        status: row.status as OrderStatus,
+        fulfilment: row.fulfilment as "pickup" | "delivery",
+        items: row.order_items.map((item) => ({
+          name: item.item_name,
+          flavour: item.flavour,
+          quantity: item.quantity,
+          unitLabel: item.unit_label,
+        })),
+      });
+    }
+  }
 
   return {
-    days: buildBakingDays(boardOrders, today, BOARD_DAYS),
-    proofsToCheck: counts.proofsToCheck,
-    quotesToSet: counts.quotesToSet,
+    tiles: {
+      proofsToCheck: counts.proofsToCheck,
+      quotesToSet: counts.quotesToSet,
+      readyToComplete: ready.count ?? 0,
+      ordersToday: dueToday.count ?? 0,
+    },
+    countsByDate,
+    dayOrders,
   };
 }
 
