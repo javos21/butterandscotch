@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   blockDates,
+  parseSettings,
   saveArea,
   unblockDate,
   updateSettings,
@@ -9,6 +10,14 @@ import {
 } from "@/lib/admin/settings";
 
 const NOW = new Date("2026-11-23T14:00:00Z");
+/** A settings row carrying the V2 column defaults from migration 0006. */
+const defaults = {
+  store_open: false,
+  order_close_date: "2026-12-16",
+  last_fulfilment_date: "2026-12-23",
+  pickup_locations: ["West", "Chaguanas"],
+};
+const CLOSE_ORDER_ERROR = "Last fulfilment date must be on or after the order close date";
 const STAFF_ID = "00000000-0000-0000-0000-0000000005a5";
 const PHONE_ERROR = "Please enter a valid WhatsApp number";
 const BANK = {
@@ -27,13 +36,26 @@ type Calls = {
   deletes: string[];
 };
 
-function makeRepo(options: { policyText?: string; policyVersion?: number; otherActiveAreas?: number } = {}) {
+function makeRepo(
+  options: {
+    policyText?: string;
+    policyVersion?: number;
+    otherActiveAreas?: number;
+    closeDates?: { order_close_date: string; last_fulfilment_date: string };
+  } = {},
+) {
   const calls: Calls = { settingsWrites: [], areaSaves: [], upserts: [], deletes: [] };
   const repo: SettingsRepo = {
     async getPolicy() {
       return {
         policy_text: options.policyText ?? "Existing policy text for the shop.",
         policy_version: options.policyVersion ?? 3,
+      };
+    },
+    async getCloseDates() {
+      return options.closeDates ?? {
+        order_close_date: defaults.order_close_date,
+        last_fulfilment_date: defaults.last_fulfilment_date,
       };
     },
     async updateSettings(values) {
@@ -56,7 +78,50 @@ function makeRepo(options: { policyText?: string; policyVersion?: number; otherA
   return { deps, calls };
 }
 
+describe("parseSettings", () => {
+  test("reads the V2 close dates and pickup locations from the row", () => {
+    const parsed = parseSettings(defaults);
+    expect(parsed.order_close_date).toBe("2026-12-16");
+    expect(parsed.last_fulfilment_date).toBe("2026-12-23");
+    expect(parsed.pickup_locations).toEqual(["West", "Chaguanas"]);
+  });
+
+  test("falls back to the defaults when the columns are missing", () => {
+    const parsed = parseSettings({ store_open: false });
+    expect(parsed.order_close_date).toBe("2026-12-16");
+    expect(parsed.last_fulfilment_date).toBe("2026-12-23");
+    expect(parsed.pickup_locations).toEqual(["West", "Chaguanas"]);
+  });
+});
+
 describe("updateSettings", () => {
+  test("refuses a last fulfilment date before the order close date", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings({ last_fulfilment_date: "2026-12-10" }, deps);
+    expect(result).toEqual({ error: CLOSE_ORDER_ERROR, field: "last_fulfilment_date" });
+    expect(calls.settingsWrites).toHaveLength(0);
+  });
+
+  test("checks the new close date against the stored last fulfilment date", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings({ order_close_date: "2026-12-30" }, deps);
+    expect(result).toEqual({ error: CLOSE_ORDER_ERROR, field: "last_fulfilment_date" });
+    expect(calls.settingsWrites).toHaveLength(0);
+  });
+
+  test("saves close dates in order", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings(
+      { order_close_date: "2026-12-14", last_fulfilment_date: "2026-12-21" },
+      deps,
+    );
+    expect(result).toEqual({ ok: true });
+    expect(calls.settingsWrites[0]).toEqual({
+      order_close_date: "2026-12-14",
+      last_fulfilment_date: "2026-12-21",
+    });
+  });
+
   test("saves a valid shop section", async () => {
     const { deps, calls } = makeRepo();
     const result = await updateSettings({ store_open: false, lead_time_days: 2, daily_order_cap: 30 }, deps);

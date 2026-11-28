@@ -12,6 +12,8 @@ const FEE_ERROR = "Enter a fee between 0 and 1,000";
 const FEE_MAX_CENTS = 100_000;
 const LAST_AREA_ERROR = "Keep at least one delivery area switched on";
 const DATE_ERROR = "Pick a valid date";
+const CLOSE_ORDER_ERROR = "Last fulfilment date must be on or after the order close date";
+const PICKUP_ERROR = "Enter between 1 and 10 pickup locations, each up to 60 characters";
 const PAST_DATE_ERROR = "Pick today or a later date";
 const SPAN_ERROR = "Block at most 60 days at a time";
 const ORDER_ERROR = "The end date can't be before the start date";
@@ -45,9 +47,26 @@ const bankDetailsSchema = z.object({
   account_no_other_bank: bankField(BANK_LABELS.account_no_other_bank),
 });
 
+/** Column defaults from migration 0006, used when a settings row lacks the V2 columns. */
+export const DEFAULT_ORDER_CLOSE_DATE = "2026-12-16";
+export const DEFAULT_LAST_FULFILMENT_DATE = "2026-12-23";
+export const DEFAULT_PICKUP_LOCATIONS = ["West", "Chaguanas"];
+
+const isoDate = z
+  .string()
+  .refine((value) => isIsoDate(value), { message: DATE_ERROR });
+
+const pickupLocationsSchema = z
+  .array(z.string().trim().min(1, PICKUP_ERROR).max(60, PICKUP_ERROR))
+  .min(1, PICKUP_ERROR)
+  .max(10, PICKUP_ERROR);
+
 /** Every settings field. Each form section sends only its own fields, so every field is optional on save. */
 const settingsFields = {
   store_open: z.boolean(),
+  order_close_date: isoDate,
+  last_fulfilment_date: isoDate,
+  pickup_locations: pickupLocationsSchema,
   lead_time_days: z
     .number("Lead time must be a whole number of days")
     .int(LEAD_TIME_ERROR)
@@ -109,6 +128,8 @@ export type AreaInput = z.input<typeof areaSchema>;
 
 export type SettingsRepo = {
   getPolicy(): Promise<{ policy_text: string; policy_version: number }>;
+  /** The stored order close date and last fulfilment date, used to check a partial update. */
+  getCloseDates(): Promise<{ order_close_date: string; last_fulfilment_date: string }>;
   /** Updates the single settings row (id = 1). */
   updateSettings(values: SettingsUpdate): Promise<void>;
   /** Counts active delivery areas, leaving out the area with excludeId when given. */
@@ -135,12 +156,39 @@ function firstIssue(error: z.ZodError): SettingsResult {
   return { error: issue?.message ?? "Something went wrong — refresh and try again", ...(field ? { field } : {}) };
 }
 
+/**
+ * Reads the V2 settings columns from a settings row. A missing column falls back to its migration
+ * default, so an older row still yields usable close dates and pickup locations.
+ */
+export function parseSettings<T extends object>(
+  row: T,
+): T & { order_close_date: string; last_fulfilment_date: string; pickup_locations: string[] } {
+  const source = row as T & Partial<Record<"order_close_date" | "last_fulfilment_date" | "pickup_locations", unknown>>;
+  return {
+    ...row,
+    order_close_date: typeof source.order_close_date === "string" ? source.order_close_date : DEFAULT_ORDER_CLOSE_DATE,
+    last_fulfilment_date:
+      typeof source.last_fulfilment_date === "string" ? source.last_fulfilment_date : DEFAULT_LAST_FULFILMENT_DATE,
+    pickup_locations: Array.isArray(source.pickup_locations)
+      ? (source.pickup_locations as string[])
+      : DEFAULT_PICKUP_LOCATIONS,
+  };
+}
+
 /** Saves the fields of one settings section. Changing policy_text bumps policy_version by one. */
 export async function updateSettings(input: SettingsPatchInput, deps: SettingsDeps): Promise<SettingsResult> {
   const parsed = settingsPatchSchema.safeParse(input);
   if (!parsed.success) return firstIssue(parsed.error);
 
   const values: SettingsUpdate = { ...parsed.data };
+
+  if (parsed.data.order_close_date !== undefined || parsed.data.last_fulfilment_date !== undefined) {
+    const stored = await deps.repo.getCloseDates();
+    const closeDate = parsed.data.order_close_date ?? stored.order_close_date;
+    const lastDate = parsed.data.last_fulfilment_date ?? stored.last_fulfilment_date;
+    if (lastDate < closeDate) return { error: CLOSE_ORDER_ERROR, field: "last_fulfilment_date" };
+  }
+
   if (parsed.data.policy_text !== undefined) {
     const current = await deps.repo.getPolicy();
     if (current.policy_text !== parsed.data.policy_text) {

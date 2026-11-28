@@ -127,3 +127,10 @@ on conflict (id) do nothing;
 update items set image_url = '/items/hummingbird-cake.webp' where name = 'Hummingbird Cake';
 update items set image_url = '/items/orange-almond-cake.webp' where name = 'Orange Almond Cake';
 update items set image_url = '/items/honey-pistachio-cake.webp' where name = 'Honey Pistachio Cake';
+
+-- Order close dates and pickup locations (the owner can change these in /admin/settings).
+update settings set
+  order_close_date = '2026-12-16',
+  last_fulfilment_date = '2026-12-23',
+  pickup_locations = '{West,Chaguanas}'
+where id = 1;

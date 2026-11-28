@@ -22,6 +22,16 @@ export function settingsRepo(): SettingsRepo {
       return data;
     },
 
+    async getCloseDates() {
+      const { data, error } = await db
+        .from("settings")
+        .select("order_close_date, last_fulfilment_date")
+        .eq("id", 1)
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+
     async updateSettings(values: SettingsUpdate) {
       const { bank_details, ...rest } = values;
       const { error } = await db

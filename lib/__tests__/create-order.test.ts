@@ -95,6 +95,9 @@ function makeSettings(overrides: Partial<Settings> = {}): Settings {
     policy_version: 3,
     whatsapp_number: "",
     notify_email: "staff@example.test",
+    order_close_date: "2026-12-16",
+    last_fulfilment_date: "2026-12-23",
+    pickup_locations: ["West", "Chaguanas"],
     updated_at: "2026-11-11T00:00:00Z",
     ...overrides,
   };

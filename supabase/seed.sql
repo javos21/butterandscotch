@@ -21,7 +21,10 @@ update settings set
   policy_text = 'Placeholder order policy.',
   policy_version = 1,
   whatsapp_number = '+1-868-000-0000',
-  notify_email = 'orders@example.test'
+  notify_email = 'orders@example.test',
+  order_close_date = '2026-12-16',
+  last_fulfilment_date = '2026-12-23',
+  pickup_locations = '{West,Chaguanas}'
 where id = 1;
 
 -- Menu sections ---------------------------------------------------------

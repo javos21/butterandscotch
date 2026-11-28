@@ -37,6 +37,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"customers": {
+                  Row: {
+                    "broadcast_opt_in": boolean,"broadcast_opt_in_at": string | null,"community_opt_in": boolean,"community_opt_in_at": string | null,"created_at": string | null,"email": string,"first_order_at": string | null,"id": string,"last_order_at": string | null,"name": string | null,"phone": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "broadcast_opt_in"?: boolean,"broadcast_opt_in_at"?: string | null,"community_opt_in"?: boolean,"community_opt_in_at"?: string | null,"created_at"?: string | null,"email": string,"first_order_at"?: string | null,"id"?: string,"last_order_at"?: string | null,"name"?: string | null,"phone"?: string | null
+                  }
+                  Update: {
+                    "broadcast_opt_in"?: boolean,"broadcast_opt_in_at"?: string | null,"community_opt_in"?: boolean,"community_opt_in_at"?: string | null,"created_at"?: string | null,"email"?: string,"first_order_at"?: string | null,"id"?: string,"last_order_at"?: string | null,"name"?: string | null,"phone"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"delivery_areas": {
                   Row: {
                     "active": boolean,"fee_cents": number | null,"id": string,"name": string,"sort": number
@@ -179,17 +193,23 @@ isOneToOne: false
                   ]
                 },"orders": {
                   Row: {
-                    "access_token": string,"adjustments_cents": number,"allergies": string,"created_at": string,"customer_name": string,"delivery_address": string | null,"delivery_area_id": string | null,"delivery_area_name": string | null,"delivery_fee_cents": number | null,"email": string,"fulfil_date": string,"fulfilment": string,"id": string,"idempotency_key": string,"marketing_opt_in": boolean,"notes": string | null,"order_number": string,"payment_window_started_at": string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at": string | null,"status": string,"subtotal_cents": number,"total_cents": number,"updated_at": string
+                    "access_token": string,"adjustments_cents": number,"allergies": string,"created_at": string,"customer_id": string | null,"customer_name": string,"delivery_address": string | null,"delivery_area_id": string | null,"delivery_area_name": string | null,"delivery_fee_cents": number | null,"email": string,"fulfil_date": string,"fulfilment": string,"id": string,"idempotency_key": string,"marketing_opt_in": boolean,"notes": string | null,"order_number": string,"payment_window_started_at": string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at": string | null,"status": string,"subtotal_cents": number,"total_cents": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "access_token": string,"adjustments_cents"?: number,"allergies": string,"created_at"?: string,"customer_name": string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email": string,"fulfil_date": string,"fulfilment": string,"id"?: string,"idempotency_key": string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents": number,"total_cents": number,"updated_at"?: string
+                    "access_token": string,"adjustments_cents"?: number,"allergies": string,"created_at"?: string,"customer_id"?: string | null,"customer_name": string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email": string,"fulfil_date": string,"fulfilment": string,"id"?: string,"idempotency_key": string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents": number,"total_cents": number,"updated_at"?: string
                   }
                   Update: {
-                    "access_token"?: string,"adjustments_cents"?: number,"allergies"?: string,"created_at"?: string,"customer_name"?: string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email"?: string,"fulfil_date"?: string,"fulfilment"?: string,"id"?: string,"idempotency_key"?: string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone"?: string,"policy_accepted_at"?: string,"policy_version"?: number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents"?: number,"total_cents"?: number,"updated_at"?: string
+                    "access_token"?: string,"adjustments_cents"?: number,"allergies"?: string,"created_at"?: string,"customer_id"?: string | null,"customer_name"?: string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email"?: string,"fulfil_date"?: string,"fulfilment"?: string,"id"?: string,"idempotency_key"?: string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone"?: string,"policy_accepted_at"?: string,"policy_version"?: number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents"?: number,"total_cents"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "orders_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
+      referencedRelation: "customers"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "orders_delivery_area_id_fkey"
       columns: ["delivery_area_id"]
 isOneToOne: false
@@ -253,14 +273,14 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "bank_details": NonNullable<Json>,"daily_order_cap": number,"id": number,"lead_time_days": number,"notify_email": string | null,"pickup_info": string,"policy_text": string,"policy_version": number,"store_open": boolean,"updated_at": string,"whatsapp_number": string
+                    "bank_details": NonNullable<Json>,"daily_order_cap": number,"id": number,"last_fulfilment_date": string,"lead_time_days": number,"notify_email": string | null,"order_close_date": string,"pickup_info": string,"pickup_locations": (string)[],"policy_text": string,"policy_version": number,"store_open": boolean,"updated_at": string,"whatsapp_number": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "bank_details"?: NonNullable<Json>,"daily_order_cap"?: number,"id"?: number,"lead_time_days"?: number,"notify_email"?: string | null,"pickup_info"?: string,"policy_text"?: string,"policy_version"?: number,"store_open"?: boolean,"updated_at"?: string,"whatsapp_number"?: string
+                    "bank_details"?: NonNullable<Json>,"daily_order_cap"?: number,"id"?: number,"last_fulfilment_date"?: string,"lead_time_days"?: number,"notify_email"?: string | null,"order_close_date"?: string,"pickup_info"?: string,"pickup_locations"?: (string)[],"policy_text"?: string,"policy_version"?: number,"store_open"?: boolean,"updated_at"?: string,"whatsapp_number"?: string
                   }
                   Update: {
-                    "bank_details"?: NonNullable<Json>,"daily_order_cap"?: number,"id"?: number,"lead_time_days"?: number,"notify_email"?: string | null,"pickup_info"?: string,"policy_text"?: string,"policy_version"?: number,"store_open"?: boolean,"updated_at"?: string,"whatsapp_number"?: string
+                    "bank_details"?: NonNullable<Json>,"daily_order_cap"?: number,"id"?: number,"last_fulfilment_date"?: string,"lead_time_days"?: number,"notify_email"?: string | null,"order_close_date"?: string,"pickup_info"?: string,"pickup_locations"?: (string)[],"policy_text"?: string,"policy_version"?: number,"store_open"?: boolean,"updated_at"?: string,"whatsapp_number"?: string
                   }
                   Relationships: [
                     
@@ -284,14 +304,14 @@ isOneToOne: false
           Views: {
             "public_settings": {
                   Row: {
-                    "daily_order_cap": number,"lead_time_days": number,"pickup_info": string,"policy_text": string,"policy_version": number,"store_open": boolean,"whatsapp_number": string
+                    "daily_order_cap": number,"last_fulfilment_date": string,"lead_time_days": number,"order_close_date": string,"pickup_info": string,"pickup_locations": (string)[],"policy_text": string,"policy_version": number,"store_open": boolean,"whatsapp_number": string
                   }
                   ComputedFields: never
                   Insert: {
-                           "daily_order_cap"?: number | null,"lead_time_days"?: number | null,"pickup_info"?: string | null,"policy_text"?: string | null,"policy_version"?: number | null,"store_open"?: boolean | null,"whatsapp_number"?: string | null
+                           "daily_order_cap"?: number | null,"last_fulfilment_date"?: string | null,"lead_time_days"?: number | null,"order_close_date"?: string | null,"pickup_info"?: string | null,"pickup_locations"?: (string)[] | null,"policy_text"?: string | null,"policy_version"?: number | null,"store_open"?: boolean | null,"whatsapp_number"?: string | null
                          }
                         Update: {
-                           "daily_order_cap"?: number | null,"lead_time_days"?: number | null,"pickup_info"?: string | null,"policy_text"?: string | null,"policy_version"?: number | null,"store_open"?: boolean | null,"whatsapp_number"?: string | null
+                           "daily_order_cap"?: number | null,"last_fulfilment_date"?: string | null,"lead_time_days"?: number | null,"order_close_date"?: string | null,"pickup_info"?: string | null,"pickup_locations"?: (string)[] | null,"policy_text"?: string | null,"policy_version"?: number | null,"store_open"?: boolean | null,"whatsapp_number"?: string | null
                          }
                         Relationships: [
                     
