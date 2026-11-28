@@ -29,6 +29,7 @@ export default async function CheckoutPage() {
       unavailable={unavailable}
       lastFulfilmentDate={settings.last_fulfilment_date}
       orderingClosed={isOrderingClosed(new Date(), settings.order_close_date)}
+      pickupLocations={settings.pickup_locations}
       policyText={settings.policy_text}
       whatsappNumber={settings.whatsapp_number}
     />

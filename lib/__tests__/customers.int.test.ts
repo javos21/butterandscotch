@@ -45,6 +45,8 @@ describe.skipIf(!url || !serviceKey)("customer records written by create_order_w
       allergies: "None",
       notes: null,
       broadcast_opt_in: false,
+      broadcastConsentText: null,
+      pickup_location: null,
       subtotal_cents: 1000,
       total_cents: 1000,
       status: "awaiting_payment",
@@ -142,6 +144,54 @@ describe.skipIf(!url || !serviceKey)("customer records written by create_order_w
     await repo.insertOrder(order("opt-4", { email, broadcast_opt_in: true }), lines);
     const afterRepeat = await customerFor(email);
     expect(afterRepeat.broadcast_opt_in_at).toBe(firstOptIn);
+  });
+
+  test("the consent text is stored at the first opt-in and kept by later orders", async () => {
+    const repo = buildOrderRepo();
+    const email = `${stamp}-consent@example.test`;
+    const text = "Opt in to our WhatsApp broadcast for offers";
+
+    await repo.insertOrder(order("consent-1", { email, broadcast_opt_in: false }), lines);
+    expect((await customerFor(email)).broadcast_consent_text).toBeNull();
+
+    await repo.insertOrder(
+      order("consent-2", { email, broadcast_opt_in: true, broadcastConsentText: text }),
+      lines,
+    );
+    expect((await customerFor(email)).broadcast_consent_text).toBe(text);
+
+    // A later tick with different text does not overwrite the text shown at the first opt-in.
+    await repo.insertOrder(
+      order("consent-3", { email, broadcast_opt_in: true, broadcastConsentText: "Changed wording" }),
+      lines,
+    );
+    expect((await customerFor(email)).broadcast_consent_text).toBe(text);
+  });
+
+  test("the pickup location is stored on the order, and null for a delivery", async () => {
+    const repo = buildOrderRepo();
+    const email = `${stamp}-pickup-loc@example.test`;
+
+    const pickup = await repo.insertOrder(
+      order("loc-1", { email, pickup_location: "Chaguanas" }),
+      lines,
+    );
+    const delivery = await repo.insertOrder(
+      order("loc-2", {
+        email,
+        fulfilment: "delivery",
+        delivery_address: "12 Frederick St, Port of Spain",
+        pickup_location: null,
+      }),
+      lines,
+    );
+
+    const { data: rows } = await service()
+      .from("orders")
+      .select("id, pickup_location")
+      .in("id", [pickup.id, delivery.id]);
+    expect(rows?.find((row) => row.id === pickup.id)?.pickup_location).toBe("Chaguanas");
+    expect(rows?.find((row) => row.id === delivery.id)?.pickup_location).toBeNull();
   });
 
   test("the order keeps the name typed at checkout after the customer record changes", async () => {

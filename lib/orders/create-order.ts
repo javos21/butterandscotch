@@ -9,6 +9,7 @@ import {
 import { siteUrl } from "@/lib/email/layout";
 import { sendTemplate } from "@/lib/email/send";
 import type { EmailDeps } from "@/lib/email/types";
+import { BROADCAST_CONSENT_TEXT } from "@/lib/customers/consent-text";
 import { lineTotal, sumCents } from "@/lib/money";
 import type { Item, Settings } from "@/lib/types";
 import { checkoutIssueError, checkoutSchema, type CheckoutField } from "@/lib/validation";
@@ -26,11 +27,14 @@ export type NewOrder = {
   phone: string;
   fulfilment: "pickup" | "delivery";
   delivery_address: string | null;
+  pickup_location: string | null;
   fulfil_date: string;
   allergies: string;
   notes: string | null;
   /** Stored on the customer record by create_order_with_items, and on the order as the box was ticked. */
   broadcast_opt_in: boolean;
+  /** The checkbox label shown when the box was ticked. Set on the server, never taken from the browser. */
+  broadcastConsentText: string | null;
   subtotal_cents: number;
   total_cents: number;
   status: "awaiting_payment";
@@ -201,6 +205,7 @@ export async function createOrder(
   const fulfilment = {
     fulfilment: checkout.fulfilment.type,
     delivery_address: checkout.fulfilment.type === "delivery" ? checkout.fulfilment.address : null,
+    pickup_location: checkout.fulfilment.type === "pickup" ? checkout.fulfilment.location : null,
     status: "awaiting_payment" as const,
     payment_window_started_at: nowIso,
   };
@@ -221,8 +226,9 @@ export async function createOrder(
         ...fulfilment,
         fulfil_date: checkout.date,
         allergies: checkout.allergies,
-        notes: checkout.notes || null,
+        notes: null,
         broadcast_opt_in: checkout.broadcastOptIn,
+        broadcastConsentText: checkout.broadcastOptIn ? BROADCAST_CONSENT_TEXT : null,
         subtotal_cents: subtotalCents,
         total_cents: totalCents,
         policy_version: settings.policy_version,

@@ -3,6 +3,10 @@ import { normaliseEmail } from "@/lib/customers/normalise-email";
 import { normalisePhone } from "@/lib/phone";
 
 export const PHONE_MESSAGE = "Please enter a valid WhatsApp number";
+export const PICKUP_LOCATION_MESSAGE = "Choose West or Chaguanas";
+
+export const PICKUP_LOCATIONS = ["West", "Chaguanas"] as const;
+export type PickupLocation = (typeof PICKUP_LOCATIONS)[number];
 
 const lineSchema = z.object({
   itemId: z.guid(),
@@ -23,7 +27,10 @@ export const checkoutSchema = z.object({
     return normalised;
   }),
   fulfilment: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("pickup") }),
+    z.object({
+      type: z.literal("pickup"),
+      location: z.enum(PICKUP_LOCATIONS, { error: PICKUP_LOCATION_MESSAGE }),
+    }),
     z.object({
       type: z.literal("delivery"),
       address: z.string().trim().min(5).max(300),
@@ -31,7 +38,6 @@ export const checkoutSchema = z.object({
   ]),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   allergies: z.string().trim().min(1).max(500),
-  notes: z.string().trim().max(1000).optional(),
   broadcastOptIn: z.boolean().default(false),
   acceptPolicy: z.literal(true),
   idempotencyKey: z.string().min(16).max(64),
@@ -46,6 +52,7 @@ export type CheckoutField =
   | "email"
   | "phone"
   | "address"
+  | "pickupLocation"
   | "allergies"
   | "policy"
   | "date"
@@ -57,6 +64,7 @@ const FIELD_MESSAGES: Record<CheckoutField, string> = {
   email: "Please enter a valid email address.",
   phone: PHONE_MESSAGE,
   address: "Please enter your delivery address.",
+  pickupLocation: PICKUP_LOCATION_MESSAGE,
   allergies: "Please tell us about any allergies, or type None.",
   policy: "Please accept the order policy to continue.",
   date: "Please choose a date.",
@@ -86,7 +94,9 @@ export function checkoutIssueError(
       field = "policy";
       break;
     case "fulfilment":
-      field = second === "address" ? "address" : "fulfilment";
+      if (second === "address") field = "address";
+      else if (second === "location") field = "pickupLocation";
+      else field = "fulfilment";
       break;
   }
   return field ? { field, error: FIELD_MESSAGES[field] } : null;

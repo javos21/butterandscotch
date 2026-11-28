@@ -18,9 +18,10 @@ test("pickup order to proof", async ({ page }) => {
 
   await fillContact(page);
   await page.getByLabel("Pickup", { exact: true }).check();
+  await page.getByLabel("Pickup location").selectOption("West");
   await page.locator('[data-state="available"]').first().click();
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
 
   await expect(page).toHaveURL(/\/order\//);
   await expect(page.getByText("Your order is not confirmed until we receive and check your payment")).toBeVisible();
@@ -48,8 +49,9 @@ test("lead time days cannot be picked", async ({ page }) => {
   await expect(page.getByText("We need 5 days to bake this fresh")).toBeVisible();
 
   await fillContact(page);
+  await page.getByLabel("Pickup location").selectOption("West");
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
 
   await expect(page.getByText("Please choose a date.")).toBeVisible();
   await expect(page).toHaveURL(/\/checkout$/);
@@ -67,7 +69,7 @@ test("a delivery order shows the delivery note and no fee", async ({ page }) => 
   await page.getByLabel("Delivery address").fill("1 Test Street, Port of Spain");
   await page.locator('[data-state="available"]').first().click();
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
 
   await expect(page).toHaveURL(/\/order\//);
   await expect(page.getByText("Once your order is confirmed we will contact you with your total delivery amount.")).toBeVisible();
@@ -104,9 +106,10 @@ test.describe("no horizontal scroll at 375px", () => {
 
     await fillContact(page);
     await page.getByLabel("Pickup", { exact: true }).check();
+    await page.getByLabel("Pickup location").selectOption("West");
     await page.locator('[data-state="available"]').first().click();
     await acceptPolicyAndAllergies(page);
-    await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+    await page.getByRole("button", { name: "Place Order" }).click();
 
     await expect(page).toHaveURL(/\/order\//);
     await expect(page.getByText("Your order is not confirmed until we receive and check your payment")).toBeVisible();

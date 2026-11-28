@@ -13,12 +13,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { BROADCAST_CONSENT_TEXT } from "@/lib/customers/consent-text";
 import { roomFor } from "@/lib/cart";
 import { formatFulfilDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/money";
 import { waLink } from "@/lib/phone";
 import { randomId } from "@/lib/uuid";
 import { checkoutFieldError, type CheckoutField } from "@/lib/validation";
+
+/**
+ * The oDeliver page where a customer can check their exact delivery fee.
+ * TODO(owner): replace null with the exact URL from the owner. Until then the sentence shows without a link.
+ */
+const ODELIVER_FEE_URL: string | null = null;
+
+const DELIVERY_FEE_TEXT =
+  "If you would like to check your exact delivery fee before you place your order, click here.";
+const PICKUP_NOTE =
+  "You will be contacted for more information about collection once your order is confirmed.";
+const DELIVERY_NOTE =
+  "Once your order is confirmed we will contact you with your total delivery amount. Delivery can be paid via cash or card upon delivery.";
+const ALLERGY_DISCLAIMER =
+  "Our kitchen is not allergen free. If you have severe allergies, please contact us before placing your order.";
+const CONFIRMATION_LINE = "Your order will only be confirmed after proof of payment is received.";
 
 export type CheckoutFormProps = {
   /** Menu items with an allergen note, named in the allergies help text. */
@@ -30,6 +47,8 @@ export type CheckoutFormProps = {
   lastFulfilmentDate: string;
   /** True once ordering has closed for Christmas. */
   orderingClosed: boolean;
+  /** From settings.pickup_locations. */
+  pickupLocations: string[];
   policyText: string;
   whatsappNumber: string;
 };
@@ -41,6 +60,11 @@ type Errors = Partial<Record<CheckoutField, string>> & { form?: string };
 
 const GENERIC_ERROR = "We couldn’t place your order. Please try again — your details are still here.";
 
+/** Checkout amounts always carry the $ prefix (TTD). Only checkout uses it; other pages are unchanged. */
+function checkoutMoney(cents: number): string {
+  return `$${formatMoney(cents)}`;
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
@@ -50,7 +74,7 @@ function FieldError({ message }: { message?: string }) {
   );
 }
 
-/** The checkout: cart, details, pickup or delivery, date, allergies, policy and the place-order button. */
+/** The checkout: cart, details, pickup or delivery, date, allergies, broadcast opt-in, policy and the place-order button. */
 export function CheckoutForm({
   allergenNotes,
   leadDays,
@@ -58,6 +82,7 @@ export function CheckoutForm({
   unavailable,
   lastFulfilmentDate,
   orderingClosed,
+  pickupLocations,
   policyText,
   whatsappNumber,
 }: CheckoutFormProps) {
@@ -72,11 +97,11 @@ export function CheckoutForm({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [fulfilment, setFulfilment] = useState<Fulfilment>("pickup");
+  const [pickupLocation, setPickupLocation] = useState("");
   const [address, setAddress] = useState("");
   const [date, setDate] = useState<string | null>(null);
   const [allergies, setAllergies] = useState("");
-  const [notes, setNotes] = useState("");
-  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [broadcastOptIn, setBroadcastOptIn] = useState(false);
   const [acceptPolicy, setAcceptPolicy] = useState(false);
 
   const whatsappHref = waLink(whatsappNumber);
@@ -104,12 +129,11 @@ export function CheckoutForm({
       phone,
       fulfilment:
         fulfilment === "pickup"
-          ? { type: "pickup" as const }
+          ? { type: "pickup" as const, location: pickupLocation }
           : { type: "delivery" as const, address },
       date: date ?? "",
       allergies,
-      notes: notes.trim() || undefined,
-      broadcastOptIn: marketingOptIn,
+      broadcastOptIn,
       acceptPolicy,
       idempotencyKey,
       lines: lines.map((line) => ({
@@ -175,7 +199,7 @@ export function CheckoutForm({
                 <div className="min-w-0">
                   <p className="font-display text-lg leading-tight text-crimson-deep">{line.name}</p>
                   {line.flavour && <p className="text-[0.9375rem] text-olive">{line.flavour}</p>}
-                  <p className="font-extrabold text-olive-ink">{formatMoney(line.unitPriceCents * line.quantity)}</p>
+                  <p className="font-extrabold text-olive-ink">{checkoutMoney(line.unitPriceCents * line.quantity)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -247,17 +271,46 @@ export function CheckoutForm({
           </div>
         </RadioGroup>
 
+        {fulfilment === "pickup" && (
+          <div className="space-y-2">
+            <Label htmlFor="pickup-location">Pickup location</Label>
+            <select
+              id="pickup-location"
+              name="pickupLocation"
+              aria-invalid={!!errors.pickupLocation}
+              value={pickupLocation}
+              onChange={(e) => setPickupLocation(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-base"
+            >
+              <option value="">Choose a location</option>
+              {pickupLocations.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
+            <FieldError message={errors.pickupLocation} />
+            <p className="text-sm italic text-muted-foreground">{PICKUP_NOTE}</p>
+          </div>
+        )}
+
         {fulfilment === "delivery" && (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="address">Delivery address</Label>
               <Textarea id="address" name="address" required aria-invalid={!!errors.address} value={address} onChange={(e) => setAddress(e.target.value)} />
               <FieldError message={errors.address} />
-              <p className="text-sm italic text-muted-foreground">
-                Once your order is confirmed we will contact you with your total delivery amount. Delivery can be paid via
-                cash or card upon delivery.
-              </p>
             </div>
+            <p className="text-sm">
+              {ODELIVER_FEE_URL ? (
+                <a href={ODELIVER_FEE_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                  {DELIVERY_FEE_TEXT}
+                </a>
+              ) : (
+                DELIVERY_FEE_TEXT
+              )}
+            </p>
+            <p className="text-sm italic text-muted-foreground">{DELIVERY_NOTE}</p>
           </div>
         )}
         {errors.fulfilment && (
@@ -291,11 +344,11 @@ export function CheckoutForm({
       </section>
 
       <section className="space-y-5 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
-        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Allergies and notes</h2>
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Allergies</h2>
         <div className="space-y-2">
           <Label htmlFor="allergies">Allergies or dietary needs</Label>
           <div className="text-sm text-muted-foreground">
-            Our kitchen is not allergen-free. Tell us about any allergies.
+            {ALLERGY_DISCLAIMER}
             {allergenNotes.length > 0 && (
               <>
                 {" "}Items with allergen notes:
@@ -312,17 +365,13 @@ export function CheckoutForm({
           <Textarea id="allergies" name="allergies" required aria-invalid={!!errors.allergies} value={allergies} onChange={(e) => setAllergies(e.target.value)} />
           <FieldError message={errors.allergies} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="notes">Anything else?</Label>
-          <Textarea id="notes" name="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </div>
+      </section>
+
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Anything else</h2>
         <div className="flex items-start gap-2">
-          <Checkbox
-            id="marketing"
-            checked={marketingOptIn}
-            onCheckedChange={(checked) => setMarketingOptIn(checked === true)}
-          />
-          <Label htmlFor="marketing">Can we contact you with offers and specials?</Label>
+          <Checkbox id="broadcast" checked={broadcastOptIn} onCheckedChange={(checked) => setBroadcastOptIn(checked === true)} />
+          <Label htmlFor="broadcast">{BROADCAST_CONSENT_TEXT}</Label>
         </div>
       </section>
 
@@ -349,11 +398,11 @@ export function CheckoutForm({
       <section className="space-y-2 rounded-[22px] bg-cream-warm p-4 text-base text-olive-ink sm:p-6">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>{formatMoney(subtotalCents)}</span>
+          <span>{checkoutMoney(subtotalCents)}</span>
         </div>
         <div className="flex justify-between border-t border-olive-line pt-2 text-xl font-extrabold">
           <span>Total</span>
-          <span>{formatMoney(subtotalCents)}</span>
+          <span>{checkoutMoney(subtotalCents)}</span>
         </div>
       </section>
 
@@ -363,11 +412,10 @@ export function CheckoutForm({
         </Alert>
       )}
 
-      <p className="rounded-2xl bg-crimson px-4 py-3 text-center text-[0.9375rem] font-bold text-cream">Your order is confirmed after payment proof is checked.</p>
-
       <Button type="submit" className="h-14 w-full rounded-2xl text-lg font-bold" disabled={pending || lines.length === 0}>
-        Place order — pay to confirm
+        Place Order
       </Button>
+      <p className="text-center text-sm text-olive-ink">{CONFIRMATION_LINE}</p>
     </form>
   );
 }

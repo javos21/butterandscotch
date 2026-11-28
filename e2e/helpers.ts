@@ -124,9 +124,10 @@ export async function placePickupOrder(page: Page, dayIndex: number): Promise<Pl
 
   await fillContact(page);
   await page.getByLabel("Pickup", { exact: true }).check();
+  await page.getByLabel("Pickup location").selectOption("West");
   await pickAvailableDate(page, dayIndex);
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
   return readPlacedOrder(page);
 }
 

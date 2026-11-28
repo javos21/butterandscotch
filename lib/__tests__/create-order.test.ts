@@ -91,7 +91,7 @@ function checkout(overrides: Record<string, unknown> = {}) {
     name: "Asha Mohan",
     email: "asha@example.test",
     phone: "868 555 0100",
-    fulfilment: { type: "pickup" },
+    fulfilment: { type: "pickup", location: "West" },
     date: "2026-11-28",
     allergies: "None",
     acceptPolicy: true,
@@ -182,6 +182,57 @@ describe("createOrder", () => {
     const customer = sent.find((msg) => msg.to === "asha@example.test");
     expect(customer?.subject).toBe("Order BS-0001 received — awaiting payment");
     expect(customer?.html).toContain("Sample Bank");
+  });
+
+  test("the pickup location is stored, and notes are not", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    await createOrder(checkout({ fulfilment: { type: "pickup", location: "Chaguanas" }, notes: "ring twice" }), {
+      repo,
+      email: deps,
+      now: () => NOW,
+    });
+
+    const [order] = insertOrder.mock.calls[0];
+    expect(order).toMatchObject({ pickup_location: "Chaguanas", notes: null });
+  });
+
+  test("a delivery order has no pickup location", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    await createOrder(checkout({ fulfilment: { type: "delivery", address: "12 Frederick St, Port of Spain" } }), {
+      repo,
+      email: deps,
+      now: () => NOW,
+    });
+
+    const [order] = insertOrder.mock.calls[0];
+    expect(order).toMatchObject({ pickup_location: null });
+  });
+
+  test("a ticked broadcast box stores the checkbox label as the consent text", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    await createOrder(checkout({ broadcastOptIn: true }), { repo, email: deps, now: () => NOW });
+
+    const [order] = insertOrder.mock.calls[0];
+    expect(order).toMatchObject({
+      broadcast_opt_in: true,
+      broadcastConsentText: "Opt in to our WhatsApp broadcast for offers",
+    });
+  });
+
+  test("an unticked broadcast box stores no consent text", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    await createOrder(checkout(), { repo, email: deps, now: () => NOW });
+
+    const [order] = insertOrder.mock.calls[0];
+    expect(order).toMatchObject({ broadcast_opt_in: false, broadcastConsentText: null });
   });
 
   test("delivery order total excludes any fee", async () => {
