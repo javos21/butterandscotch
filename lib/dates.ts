@@ -3,16 +3,36 @@ export const BOOKING_HORIZON_DAYS = 90;
 
 export type DayState = "past" | "too_soon" | "unavailable" | "available" | "beyond";
 
-const trinidadDateFormat = new Intl.DateTimeFormat("en-CA", {
-  timeZone: TT_TIME_ZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
+const calendarDateFormats = new Map<string, Intl.DateTimeFormat>();
+
+/** The calendar date of an instant in a time zone, as "YYYY-MM-DD". */
+function calendarDate(now: Date, tz: string): string {
+  let format = calendarDateFormats.get(tz);
+  if (!format) {
+    format = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    calendarDateFormats.set(tz, format);
+  }
+  return format.format(now);
+}
 
 /** The current calendar date in Trinidad, as "YYYY-MM-DD". */
 export function trinidadToday(now: Date): string {
-  return trinidadDateFormat.format(now);
+  return calendarDate(now, TT_TIME_ZONE);
+}
+
+/** True when the calendar date of `today` (Trinidad by default) is after `closeDate`. Both are "YYYY-MM-DD". */
+export function isOrderingClosed(today: Date, closeDate: string, tz: string = TT_TIME_ZONE): boolean {
+  return calendarDate(today, tz) > closeDate;
+}
+
+/** True when a fulfilment date falls after the last fulfilment date. Both are "YYYY-MM-DD". */
+export function isAfterLastFulfilment(date: string, lastDate: string): boolean {
+  return date > lastDate;
 }
 
 /** Adds whole days to an ISO date ("YYYY-MM-DD") and returns the ISO date. */

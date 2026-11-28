@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import { placeOrderAction } from "@/app/(shop)/checkout/actions";
 import { useCart } from "@/components/shop/CartProvider";
-import { DateCalendar } from "@/components/shop/DateCalendar";
+import { DateCalendar, ORDERS_CLOSED_MESSAGE } from "@/components/shop/DateCalendar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,10 @@ export type CheckoutFormProps = {
   leadDays: number;
   today: string;
   unavailable: string[];
+  /** Last fulfilment date; the calendar offers no date after it. */
+  lastFulfilmentDate: string;
+  /** True once ordering has closed for Christmas. */
+  orderingClosed: boolean;
   policyText: string;
   whatsappNumber: string;
 };
@@ -52,6 +56,8 @@ export function CheckoutForm({
   leadDays,
   today,
   unavailable,
+  lastFulfilmentDate,
+  orderingClosed,
   policyText,
   whatsappNumber,
 }: CheckoutFormProps) {
@@ -126,6 +132,13 @@ export function CheckoutForm({
           setPlaced(true);
           clear();
           router.push(`/order/${result.token}`);
+          return;
+        }
+        if ("reason" in result) {
+          // Ordering has closed, or the date is past the last fulfilment date: the calendar shows why.
+          setDate(null);
+          setErrors({ date: ORDERS_CLOSED_MESSAGE });
+          router.refresh();
           return;
         }
         if (result.field) {
@@ -255,6 +268,8 @@ export function CheckoutForm({
           today={today}
           leadDays={leadDays}
           unavailable={unavailable}
+          lastFulfilmentDate={lastFulfilmentDate}
+          orderingClosed={orderingClosed}
           value={date}
           onChange={(picked) => {
             setDate(picked);

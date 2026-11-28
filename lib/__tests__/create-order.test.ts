@@ -379,6 +379,49 @@ describe("createOrder", () => {
     expect(insertOrder).not.toHaveBeenCalled();
   });
 
+  test("order placed after close is refused as closed", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    const result = await createOrder(checkout({ date: "2026-12-23" }), {
+      repo,
+      email: deps,
+      now: () => new Date("2026-12-17T12:00:00Z"),
+    });
+
+    expect(result).toEqual({ ok: false, reason: "closed" });
+    expect(insertOrder).not.toHaveBeenCalled();
+  });
+
+  test("order placed on the close date is accepted", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    const result = await createOrder(checkout({ date: "2026-12-23" }), {
+      repo,
+      email: deps,
+      now: () => new Date("2026-12-16T12:00:00Z"),
+    });
+
+    expect(result).toHaveProperty("token");
+    expect(result).not.toHaveProperty("reason");
+    expect(insertOrder).toHaveBeenCalledTimes(1);
+  });
+
+  test("a fulfil date after the last fulfilment date is refused as after_last_date", async () => {
+    const { repo, insertOrder } = fakeRepo();
+    const { deps } = fakeEmail();
+
+    const result = await createOrder(checkout({ date: "2026-12-24" }), {
+      repo,
+      email: deps,
+      now: () => NOW,
+    });
+
+    expect(result).toEqual({ ok: false, reason: "after_last_date" });
+    expect(insertOrder).not.toHaveBeenCalled();
+  });
+
   test("blank allergies is refused against the allergies field", async () => {
     const { repo, insertOrder } = fakeRepo();
     const { deps } = fakeEmail();

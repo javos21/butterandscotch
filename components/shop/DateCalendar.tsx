@@ -2,11 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { addDays, BOOKING_HORIZON_DAYS, dayState, type DayState } from "@/lib/dates";
+import {
+  addDays,
+  BOOKING_HORIZON_DAYS,
+  dayState,
+  isAfterLastFulfilment,
+  type DayState,
+} from "@/lib/dates";
 import { formatFulfilDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Shown above the calendar, and on checkout, when orders are refused for the Christmas close. */
+export const ORDERS_CLOSED_MESSAGE = "Orders are closed for Christmas.";
 
 type DateCalendarProps = {
   today: string;
@@ -15,6 +24,10 @@ type DateCalendarProps = {
   value: string | null;
   onChange(date: string): void;
   whatsappHref: string | null;
+  /** Last date an order can be fulfilled (settings.last_fulfilment_date). Later dates cannot be chosen. */
+  lastFulfilmentDate: string;
+  /** True once ordering has closed (settings.order_close_date has passed). No date can be chosen. */
+  orderingClosed: boolean;
 };
 
 /** "YYYY-MM-01" for the month containing an ISO date. */
@@ -55,6 +68,8 @@ export function DateCalendar({
   value,
   onChange,
   whatsappHref,
+  lastFulfilmentDate,
+  orderingClosed,
 }: DateCalendarProps) {
   const firstMonth = monthStart(today);
   const lastMonth = monthStart(addDays(today, BOOKING_HORIZON_DAYS));
@@ -80,7 +95,10 @@ export function DateCalendar({
   for (let i = 0; i < leadingBlanks; i++) cells.push(<div key={`blank-${i}`} />);
   for (let day = 1; day <= daysInMonth; day++) {
     const iso = `${shown.slice(0, 7)}-${String(day).padStart(2, "0")}`;
-    const state = dayState(iso, { today, leadDays, unavailable: unavailableSet });
+    const base = dayState(iso, { today, leadDays, unavailable: unavailableSet });
+    let state: DayState = base;
+    if (isAfterLastFulfilment(iso, lastFulfilmentDate)) state = "beyond";
+    else if (orderingClosed && (base === "available" || base === "too_soon")) state = "unavailable";
     const selected = iso === value;
     const tappable = state === "available" || state === "too_soon";
 
@@ -109,6 +127,11 @@ export function DateCalendar({
 
   return (
     <div className="space-y-3">
+      {orderingClosed && (
+        <p role="status" className="text-sm font-medium text-destructive">
+          {ORDERS_CLOSED_MESSAGE}
+        </p>
+      )}
       <div className="flex items-center justify-between gap-2">
         <Button
           type="button"

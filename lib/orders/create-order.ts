@@ -1,5 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { BOOKING_HORIZON_DAYS, dayState, trinidadToday } from "@/lib/dates";
+import {
+  BOOKING_HORIZON_DAYS,
+  dayState,
+  isAfterLastFulfilment,
+  isOrderingClosed,
+  trinidadToday,
+} from "@/lib/dates";
 import { siteUrl } from "@/lib/email/layout";
 import { sendTemplate } from "@/lib/email/send";
 import type { EmailDeps } from "@/lib/email/types";
@@ -64,8 +70,15 @@ export type CreateOrderDeps = {
   defer?: (task: () => Promise<void>) => void;
 };
 
+/**
+ * Why the shop refused a date outside its Christmas window. "closed": ordering has shut
+ * (after order_close_date). "after_last_date": the fulfil date is past last_fulfilment_date.
+ */
+export type OrderRefusalReason = "closed" | "after_last_date";
+
 export type CreateOrderResult =
   | { token: string }
+  | { ok: false; reason: OrderRefusalReason }
   | { error: string; field?: CheckoutField };
 
 /** True for a real calendar date. Rejects "2026-02-30", which Date would silently roll over. */
@@ -106,6 +119,9 @@ export async function createOrder(
   }
 
   const now = deps.now ? deps.now() : new Date();
+  if (isOrderingClosed(now, settings.order_close_date)) {
+    return { ok: false, reason: "closed" };
+  }
 
   const leadMessage = `Please choose a date at least ${settings.lead_time_days} days from today.`;
   if (!isCalendarDate(checkout.date)) {
@@ -124,6 +140,9 @@ export async function createOrder(
       field: "date",
       error: `Please choose a date within the next ${BOOKING_HORIZON_DAYS} days.`,
     };
+  }
+  if (isAfterLastFulfilment(checkout.date, settings.last_fulfilment_date)) {
+    return { ok: false, reason: "after_last_date" };
   }
 
   const itemList = await deps.repo.getItems([
