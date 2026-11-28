@@ -45,7 +45,7 @@ export default async function MenuPage() {
         )}
 
         <ul className="mt-5 space-y-1 text-center text-lg font-bold text-olive-ink">
-          <li>{settings.lead_time_days}-day lead time</li>
+          <li>{settings.lead_time_days} day lead time</li>
           <li>Orders close on {formatMonthDay(settings.order_close_date)}</li>
           <li>Last day for delivery/pickup {formatMonthDay(settings.last_fulfilment_date)}</li>
         </ul>
