@@ -47,11 +47,6 @@ const bankDetailsSchema = z.object({
   account_no_other_bank: bankField(BANK_LABELS.account_no_other_bank),
 });
 
-/** Column defaults from migration 0006, used when a settings row lacks the V2 columns. */
-export const DEFAULT_ORDER_CLOSE_DATE = "2026-12-16";
-export const DEFAULT_LAST_FULFILMENT_DATE = "2026-12-23";
-export const DEFAULT_PICKUP_LOCATIONS = ["West", "Chaguanas"];
-
 const isoDate = z
   .string()
   .refine((value) => isIsoDate(value), { message: DATE_ERROR });
@@ -154,25 +149,6 @@ function firstIssue(error: z.ZodError): SettingsResult {
   const issue = error.issues[0];
   const field = issue?.path.join(".");
   return { error: issue?.message ?? "Something went wrong — refresh and try again", ...(field ? { field } : {}) };
-}
-
-/**
- * Reads the V2 settings columns from a settings row. A missing column falls back to its migration
- * default, so an older row still yields usable close dates and pickup locations.
- */
-export function parseSettings<T extends object>(
-  row: T,
-): T & { order_close_date: string; last_fulfilment_date: string; pickup_locations: string[] } {
-  const source = row as T & Partial<Record<"order_close_date" | "last_fulfilment_date" | "pickup_locations", unknown>>;
-  return {
-    ...row,
-    order_close_date: typeof source.order_close_date === "string" ? source.order_close_date : DEFAULT_ORDER_CLOSE_DATE,
-    last_fulfilment_date:
-      typeof source.last_fulfilment_date === "string" ? source.last_fulfilment_date : DEFAULT_LAST_FULFILMENT_DATE,
-    pickup_locations: Array.isArray(source.pickup_locations)
-      ? (source.pickup_locations as string[])
-      : DEFAULT_PICKUP_LOCATIONS,
-  };
 }
 
 /** Saves the fields of one settings section. Changing policy_text bumps policy_version by one. */

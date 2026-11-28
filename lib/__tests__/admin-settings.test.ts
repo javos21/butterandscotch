@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   blockDates,
-  parseSettings,
   saveArea,
+  settingsPatchSchema,
   unblockDate,
   updateSettings,
   type SettingsDeps,
@@ -78,16 +78,9 @@ function makeRepo(
   return { deps, calls };
 }
 
-describe("parseSettings", () => {
-  test("reads the V2 close dates and pickup locations from the row", () => {
-    const parsed = parseSettings(defaults);
-    expect(parsed.order_close_date).toBe("2026-12-16");
-    expect(parsed.last_fulfilment_date).toBe("2026-12-23");
-    expect(parsed.pickup_locations).toEqual(["West", "Chaguanas"]);
-  });
-
-  test("falls back to the defaults when the columns are missing", () => {
-    const parsed = parseSettings({ store_open: false });
+describe("settings schema", () => {
+  test("reads the V2 close dates and pickup locations", () => {
+    const parsed = settingsPatchSchema.parse(defaults);
     expect(parsed.order_close_date).toBe("2026-12-16");
     expect(parsed.last_fulfilment_date).toBe("2026-12-23");
     expect(parsed.pickup_locations).toEqual(["West", "Chaguanas"]);

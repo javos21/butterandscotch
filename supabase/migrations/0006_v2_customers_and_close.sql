@@ -9,7 +9,7 @@
 
 create table customers (
   id uuid primary key default gen_random_uuid(),
-  email text unique not null,
+  email text unique not null check (email = lower(email)),
   name text,
   phone text,
   broadcast_opt_in boolean not null default false,
@@ -18,7 +18,7 @@ create table customers (
   community_opt_in_at timestamptz,
   first_order_at timestamptz,
   last_order_at timestamptz,
-  created_at timestamptz default now()
+  created_at timestamptz not null default now()
 );
 
 alter table customers enable row level security;
@@ -32,13 +32,15 @@ grant select, insert, update, delete on table public.customers to authenticated,
 -- Orders -------------------------------------------------------------------
 
 alter table orders add column customer_id uuid references customers (id);
+create index orders_customer_id_idx on orders (customer_id);
 
 -- Settings -----------------------------------------------------------------
 
 alter table settings
   add column order_close_date date not null default '2026-12-16',
   add column last_fulfilment_date date not null default '2026-12-23',
-  add column pickup_locations text[] not null default '{West,Chaguanas}',
+  add column pickup_locations text[] not null default '{West,Chaguanas}'
+    check (cardinality(pickup_locations) >= 1),
   add constraint settings_last_fulfilment_after_close
     check (last_fulfilment_date >= order_close_date);
 
