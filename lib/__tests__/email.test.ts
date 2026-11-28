@@ -269,6 +269,28 @@ describe("order emails", () => {
     expect(sent[0].subject).toBe("New order BS-0009 from Asha Mohan");
     expect(sent[0].html).toContain(`${SITE}/admin/orders/abc`);
   });
+
+  test("staff_new_order shows the pickup location for pickup orders", async () => {
+    const { sent, provider } = recordingProvider();
+
+    await sendTemplate(deps(provider), {
+      orderId: null,
+      template: "staff_new_order",
+      to: "staff@example.test",
+      data: {
+        orderNumber: "BS-0010",
+        customerName: "Asha Mohan",
+        email: "asha@example.test",
+        phone: "+1-868-555-0100",
+        fulfilDate: "2026-11-28",
+        pickupLocation: "Chaguanas",
+        totalCents: 60000,
+        adminUrl: `${SITE}/admin/orders/abc`,
+      },
+    });
+
+    expect(sent[0].html).toMatch(/Pickup location:\s*(<!-- -->)?Chaguanas/);
+  });
 });
 
 describe("payment proof emails", () => {

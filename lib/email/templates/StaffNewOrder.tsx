@@ -8,6 +8,7 @@ export default function StaffNewOrder({
   email,
   phone,
   fulfilDate,
+  pickupLocation,
   totalCents,
   adminUrl,
 }: StaffNewOrderData) {
@@ -20,6 +21,7 @@ export default function StaffNewOrder({
         <li>Email: {email}</li>
         <li>WhatsApp: {phone}</li>
         <li>Date: {fulfilDate}</li>
+        {pickupLocation ? <li>Pickup location: {pickupLocation}</li> : null}
         <li>Total: {formatMoney(totalCents)}</li>
       </ul>
       <p>

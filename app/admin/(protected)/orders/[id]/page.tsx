@@ -135,7 +135,12 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                 <dd className="font-medium break-words">{order.address ?? "—"}</dd>
               </div>
             </>
-          ) : null}
+          ) : (
+            <div>
+              <dt className="text-muted-foreground">Pickup location</dt>
+              <dd className="font-medium">{order.pickupLocation ?? "—"}</dd>
+            </div>
+          )}
         </dl>
       </section>
 

@@ -287,6 +287,7 @@ export async function createOrder(
               email: checkout.email,
               phone: checkout.phone,
               fulfilDate: checkout.date,
+              pickupLocation: checkout.fulfilment.type === "pickup" ? checkout.fulfilment.location : null,
               totalCents,
               adminUrl: `${siteUrl()}/admin/orders/${inserted.id}`,
             },

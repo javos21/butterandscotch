@@ -24,6 +24,8 @@ export type StaffNewOrderData = {
   email: string;
   phone: string;
   fulfilDate: string;
+  /** Set for pickup orders only. */
+  pickupLocation?: string | null;
   totalCents: number;
   adminUrl: string;
 };

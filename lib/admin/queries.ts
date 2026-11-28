@@ -251,6 +251,7 @@ export type AdminOrderDetail = {
   fulfilment: "pickup" | "delivery";
   fulfilDate: string;
   address: string | null;
+  pickupLocation: string | null;
   allergies: string;
   notes: string | null;
   createdAt: string;
@@ -300,6 +301,7 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     fulfilment: data.fulfilment as "pickup" | "delivery",
     fulfilDate: data.fulfil_date,
     address: data.delivery_address,
+    pickupLocation: data.pickup_location,
     allergies: data.allergies,
     notes: data.notes,
     createdAt: data.created_at,
