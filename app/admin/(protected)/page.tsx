@@ -46,13 +46,6 @@ export default async function AdminHomePage({
       tone: "urgent",
     },
     {
-      key: "quotes",
-      href: "/admin/orders?status=awaiting_quote",
-      count: home.tiles.quotesToSet,
-      label: "Delivery quotes to set",
-      tone: "attention",
-    },
-    {
       key: "complete",
       href: "/admin/orders?status=ready",
       count: home.tiles.readyToComplete,

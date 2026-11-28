@@ -1,5 +1,4 @@
 import { BlockedDatesEditor } from "@/components/admin/BlockedDatesEditor";
-import { DeliveryAreasEditor } from "@/components/admin/DeliveryAreasEditor";
 import {
   BankSection,
   ContactSection,
@@ -14,7 +13,7 @@ import { requireStaff } from "@/lib/auth/require-staff";
 
 export default async function AdminSettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireStaff();
-  const [{ settings, areas, blocked }, params] = await Promise.all([loadSettingsAdmin(), searchParams]);
+  const [{ settings, blocked }, params] = await Promise.all([loadSettingsAdmin(), searchParams]);
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
@@ -32,12 +31,7 @@ export default async function AdminSettingsPage({ searchParams }: PageProps<"/ad
               <PolicySection settings={settings} />
             </>
           ),
-          delivery: (
-            <>
-              <PickupSection settings={settings} />
-              <DeliveryAreasEditor areas={areas} />
-            </>
-          ),
+          pickup: <PickupSection settings={settings} />,
           payment: <BankSection settings={settings} />,
           contact: <ContactSection settings={settings} />,
         }}

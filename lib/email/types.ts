@@ -11,12 +11,11 @@ export type OrderReceivedData = {
     lineTotalCents: number;
   }[];
   subtotalCents: number;
-  /** Null for pickup, and for a delivery area that is still waiting for a quote. */
-  deliveryFeeCents: number | null;
+  /** Items only. Delivery is paid separately, on delivery. */
   totalCents: number;
-  awaitingQuote: boolean;
-  /** Bank details to pay into. Null while the order waits for a delivery quote. */
-  bank: BankDetails | null;
+  fulfilment: "pickup" | "delivery";
+  /** Bank details to pay into. */
+  bank: BankDetails;
 };
 
 export type StaffNewOrderData = {
@@ -26,7 +25,6 @@ export type StaffNewOrderData = {
   phone: string;
   fulfilDate: string;
   totalCents: number;
-  awaitingQuote: boolean;
   adminUrl: string;
 };
 
@@ -67,12 +65,6 @@ export type ProofRejectedData = CustomerOrderBase & {
   totalCents: number;
 };
 
-export type TotalReadyData = CustomerOrderBase & {
-  deliveryFeeCents: number;
-  totalCents: number;
-  bank: BankDetails;
-};
-
 export type DateChangedData = CustomerOrderBase & {
   /** ISO "YYYY-MM-DD" business dates. */
   oldDate: string;
@@ -97,7 +89,6 @@ export type TemplateData = {
   order_links: OrderLinksData;
   order_confirmed: OrderConfirmedData;
   proof_rejected: ProofRejectedData;
-  total_ready: TotalReadyData;
   date_changed: DateChangedData;
   order_cancelled: OrderCancelledData;
   order_ready: OrderReadyData;

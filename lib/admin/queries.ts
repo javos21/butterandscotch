@@ -71,8 +71,6 @@ async function signedReceiptUrls(paths: string[]): Promise<Map<string, string>> 
 export type HomeTiles = {
   /** Proofs waiting for staff to check. */
   proofsToCheck: number;
-  /** "Other area" orders waiting for a delivery fee. */
-  quotesToSet: number;
   /** Orders baked and ready, waiting to be marked complete. */
   readyToComplete: number;
   /** Live orders due today. */
@@ -152,7 +150,6 @@ export async function getHomeData(
   return {
     tiles: {
       proofsToCheck: counts.proofsToCheck,
-      quotesToSet: counts.quotesToSet,
       readyToComplete: ready.count ?? 0,
       ordersToday: dueToday.count ?? 0,
     },
@@ -253,14 +250,12 @@ export type AdminOrderDetail = {
   status: OrderStatus;
   fulfilment: "pickup" | "delivery";
   fulfilDate: string;
-  areaName: string | null;
   address: string | null;
   allergies: string;
   notes: string | null;
   createdAt: string;
   subtotalCents: number;
   adjustmentsCents: number;
-  deliveryFeeCents: number | null;
   totalCents: number;
   items: { name: string; flavour: string | null; unitLabel: string; quantity: number; unitPriceCents: number }[];
   latestPayment: {
@@ -304,14 +299,12 @@ export async function getAdminOrder(id: string): Promise<AdminOrderDetail | null
     status: data.status as OrderStatus,
     fulfilment: data.fulfilment as "pickup" | "delivery",
     fulfilDate: data.fulfil_date,
-    areaName: data.delivery_area_name,
     address: data.delivery_address,
     allergies: data.allergies,
     notes: data.notes,
     createdAt: data.created_at,
     subtotalCents: data.subtotal_cents,
     adjustmentsCents: data.adjustments_cents,
-    deliveryFeeCents: data.delivery_fee_cents,
     totalCents: data.total_cents,
     items: [...data.order_items]
       .sort((a, b) => a.item_name.localeCompare(b.item_name) || a.id.localeCompare(b.id))

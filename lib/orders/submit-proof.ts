@@ -114,7 +114,6 @@ export type SubmitProofResult = { ok: true } | { error: string };
 
 /** The customer-facing message for a proof the order state does not accept. */
 function stateErrorMessage(status: OrderStatus, err: OrderStateError): string {
-  if (status === "awaiting_quote") return "We'll email your total before you pay.";
   if (status === "cancelled") return "This order was cancelled";
   if (status === "confirmed" || status === "ready" || status === "completed") {
     return "Your payment is already confirmed";

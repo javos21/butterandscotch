@@ -68,7 +68,6 @@ export function ReceiptDocument({ data, logo }: { data: ReceiptData; logo: Buffe
             <Text style={styles.detailLabel}>{isDelivery ? "Delivery" : "Pickup"}</Text>
             <Text style={styles.detailValue}>
               {formatFulfilDate(data.fulfilDate)}
-              {isDelivery && data.areaName ? ` · ${data.areaName}` : ""}
             </Text>
           </View>
         </View>
@@ -94,12 +93,6 @@ export function ReceiptDocument({ data, logo }: { data: ReceiptData; logo: Buffe
         </View>
 
         <View style={styles.totals}>
-          {isDelivery && data.deliveryFeeCents !== null && (
-            <View style={styles.totalLine}>
-              <Text style={styles.totalLabel}>Delivery fee</Text>
-              <Text style={styles.totalValue}>{formatMoney(data.deliveryFeeCents)}</Text>
-            </View>
-          )}
           {data.adjustmentsCents !== 0 && (
             <View style={styles.totalLine}>
               <Text style={styles.totalLabel}>Adjustments</Text>

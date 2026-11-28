@@ -34,8 +34,6 @@ export async function fetchOrder(column: "id" | "access_token", value: string): 
     status: data.status as OrderStatus,
     fulfilment: data.fulfilment as "pickup" | "delivery",
     fulfilDate: data.fulfil_date,
-    areaName: data.delivery_area_name,
-    deliveryFeeCents: data.delivery_fee_cents,
     adjustmentsCents: data.adjustments_cents,
     totalCents: data.total_cents,
     items: [...data.order_items]

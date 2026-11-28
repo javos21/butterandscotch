@@ -33,15 +33,15 @@ describe("checkoutSchema", () => {
 
   test("rejects delivery without an address", () => {
     expect(
-      checkoutSchema.safeParse({ ...ok, fulfilment: { type: "delivery", areaId: ITEM_ID, address: "" } }).success,
+      checkoutSchema.safeParse({ ...ok, fulfilment: { type: "delivery", address: "" } }).success,
     ).toBe(false);
   });
 
-  test("accepts delivery with an area and address", () => {
+  test("accepts delivery with an address and no area", () => {
     expect(
       checkoutSchema.safeParse({
         ...ok,
-        fulfilment: { type: "delivery", areaId: ITEM_ID, address: "12 Main Road, St Ann's" },
+        fulfilment: { type: "delivery", address: "12 Main Road, St Ann's" },
       }).success,
     ).toBe(true);
   });

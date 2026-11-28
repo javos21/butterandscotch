@@ -130,23 +130,6 @@ export async function placePickupOrder(page: Page, dayIndex: number): Promise<Pl
   return readPlacedOrder(page);
 }
 
-/** Places a one-item delivery order to "Other area", which waits for an admin quote. */
-export async function placeOtherAreaOrder(page: Page, dayIndex: number): Promise<PlacedOrder> {
-  await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Basket 1/ }).click();
-  await expect(page).toHaveURL(/\/checkout$/);
-
-  await fillContact(page);
-  await page.getByLabel("Delivery", { exact: true }).check();
-  await page.getByLabel("Delivery area").selectOption({ label: "Other area (we'll contact you)" });
-  await page.getByLabel("Delivery address").fill("1 Test Street, Port of Spain");
-  await pickAvailableDate(page, dayIndex);
-  await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
-  return readPlacedOrder(page);
-}
-
 /** Uploads the sample receipt on the customer's order page and waits for "Payment being checked". */
 export async function uploadProof(page: Page) {
   await page.getByLabel("Payment receipt").setInputFiles(RECEIPT);

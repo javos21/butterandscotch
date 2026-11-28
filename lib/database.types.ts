@@ -51,20 +51,6 @@ export type Database = {
                   Relationships: [
                     
                   ]
-                },"delivery_areas": {
-                  Row: {
-                    "active": boolean,"fee_cents": number | null,"id": string,"name": string,"sort": number
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "active"?: boolean,"fee_cents"?: number | null,"id"?: string,"name": string,"sort"?: number
-                  }
-                  Update: {
-                    "active"?: boolean,"fee_cents"?: number | null,"id"?: string,"name"?: string,"sort"?: number
-                  }
-                  Relationships: [
-                    
-                  ]
                 },"email_log": {
                   Row: {
                     "error": string | null,"id": string,"order_id": string | null,"provider_id": string | null,"sent_at": string,"template": string,"to_email": string
@@ -193,11 +179,11 @@ isOneToOne: false
                   ]
                 },"orders": {
                   Row: {
-                    "access_token": string,"adjustments_cents": number,"allergies": string,"created_at": string,"customer_id": string | null,"customer_name": string,"delivery_address": string | null,"delivery_area_id": string | null,"delivery_area_name": string | null,"delivery_fee_cents": number | null,"email": string,"fulfil_date": string,"fulfilment": string,"id": string,"idempotency_key": string,"marketing_opt_in": boolean,"notes": string | null,"order_number": string,"payment_window_started_at": string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at": string | null,"status": string,"subtotal_cents": number,"total_cents": number,"updated_at": string
+                    "access_token": string,"adjustments_cents": number,"allergies": string,"created_at": string,"customer_id": string | null,"customer_name": string,"delivery_address": string | null,"email": string,"fulfil_date": string,"fulfilment": string,"id": string,"idempotency_key": string,"marketing_opt_in": boolean,"notes": string | null,"order_number": string,"payment_window_started_at": string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at": string | null,"status": string,"subtotal_cents": number,"total_cents": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "access_token": string,"adjustments_cents"?: number,"allergies": string,"created_at"?: string,"customer_id"?: string | null,"customer_name": string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email": string,"fulfil_date": string,"fulfilment": string,"id"?: string,"idempotency_key": string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents": number,"total_cents": number,"updated_at"?: string
+                    "access_token": string,"adjustments_cents"?: number,"allergies": string,"created_at"?: string,"customer_id"?: string | null,"customer_name": string,"delivery_address"?: string | null,"email": string,"fulfil_date": string,"fulfilment": string,"id"?: string,"idempotency_key": string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents": number,"total_cents": number,"updated_at"?: string
                   }
                   Update: {
                     "access_token"?: string,"adjustments_cents"?: number,"allergies"?: string,"created_at"?: string,"customer_id"?: string | null,"customer_name"?: string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email"?: string,"fulfil_date"?: string,"fulfilment"?: string,"id"?: string,"idempotency_key"?: string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone"?: string,"policy_accepted_at"?: string,"policy_version"?: number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents"?: number,"total_cents"?: number,"updated_at"?: string
@@ -208,12 +194,6 @@ isOneToOne: false
       columns: ["customer_id"]
 isOneToOne: false
       referencedRelation: "customers"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "orders_delivery_area_id_fkey"
-      columns: ["delivery_area_id"]
-isOneToOne: false
-      referencedRelation: "delivery_areas"
       referencedColumns: ["id"]
     }
                   ]

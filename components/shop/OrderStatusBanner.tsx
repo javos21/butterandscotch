@@ -3,13 +3,11 @@ import type { OrderViewPayment } from "@/lib/orders/get-order";
 import type { OrderStatus } from "@/lib/order-status";
 
 const UNPAID_BANNER = "Your order is not confirmed until we receive and check your payment";
-const QUOTE_BANNER = "Awaiting delivery quote — we'll email your total";
 const CHECKING_BANNER = "We're checking your payment. We'll email you once it's confirmed.";
 const CONFIRMED_BANNER = "Your order is confirmed 🎉";
 
 const BANNER_BY_STATUS: Partial<Record<OrderStatus, string>> = {
   awaiting_payment: UNPAID_BANNER,
-  awaiting_quote: QUOTE_BANNER,
   proof_submitted: CHECKING_BANNER,
   confirmed: CONFIRMED_BANNER,
 };

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { CalendarClock, CreditCard, MessageCircle, Truck, type LucideIcon } from "lucide-react";
+import { CalendarClock, CreditCard, MapPin, MessageCircle, type LucideIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SETTINGS_TABS, type SettingsTab } from "@/lib/admin/settings-tabs";
 
 const TAB_META: Record<SettingsTab, { label: string; icon: LucideIcon }> = {
   ordering: { label: "Ordering", icon: CalendarClock },
-  delivery: { label: "Delivery", icon: Truck },
+  pickup: { label: "Pickup", icon: MapPin },
   payment: { label: "Payment", icon: CreditCard },
   contact: { label: "Contact", icon: MessageCircle },
 };

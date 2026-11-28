@@ -141,9 +141,8 @@ describe("order emails", () => {
         customerName: "Asha",
         items: [{ name: "Red Velvet", flavour: null, quantity: 2, lineTotalCents: 60000 }],
         subtotalCents: 60000,
-        deliveryFeeCents: null,
         totalCents: 60000,
-        awaitingQuote: false,
+        fulfilment: "pickup",
         bank,
       },
     });
@@ -156,32 +155,7 @@ describe("order emails", () => {
     expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
   });
 
-  test("order_received awaiting a quote has no bank details and says so in the subject", async () => {
-    const { sent, provider } = recordingProvider();
-
-    await sendTemplate(deps(provider), {
-      orderId: null,
-      template: "order_received",
-      to: "asha@example.test",
-      data: {
-        orderNumber: "BS-0008",
-        token: TOKEN,
-        customerName: "Asha",
-        items: [{ name: "Red Velvet", flavour: null, quantity: 1, lineTotalCents: 30000 }],
-        subtotalCents: 30000,
-        deliveryFeeCents: null,
-        totalCents: 30000,
-        awaitingQuote: true,
-        bank: null,
-      },
-    });
-
-    expect(sent[0].subject).toBe("Order BS-0008 received — awaiting delivery quote");
-    expect(sent[0].html).not.toContain("Sample Bank");
-    expect(sent[0].html).toContain("Your order is not confirmed until we receive and check your payment.");
-  });
-
-  test("order_received for a delivery quote shows the subtotal as a price plus delivery, not a total", async () => {
+  test("order_received for a delivery order shows the delivery note and bank details", async () => {
     const { sent, provider } = recordingProvider();
 
     await sendTemplate(deps(provider), {
@@ -194,15 +168,18 @@ describe("order emails", () => {
         customerName: "Asha",
         items: [{ name: "Red Velvet", flavour: null, quantity: 2, lineTotalCents: 60000 }],
         subtotalCents: 60000,
-        deliveryFeeCents: null,
         totalCents: 60000,
-        awaitingQuote: true,
-        bank: null,
+        fulfilment: "delivery",
+        bank,
       },
     });
 
-    expect(sent[0].html).toMatch(/Total: 600\.00 \+ delivery \(we(&#x27;|')ll email your total\)/);
-    expect(sent[0].html).not.toMatch(/Total: 600\.00<\/strong>/);
+    expect(sent[0].subject).toBe("Order BS-0011 received — awaiting payment");
+    expect(sent[0].html).toContain("Total: 600.00");
+    expect(sent[0].html).toContain("Once your order is confirmed we will contact you with your total delivery amount.");
+    expect(sent[0].html).toContain("Delivery can be paid via cash or card upon delivery.");
+    expect(sent[0].html).toContain("Sample Bank");
+    expect(sent[0].html).not.toContain("quote");
   });
 
   test("order_received for a pickup shows a plain total", async () => {
@@ -218,9 +195,8 @@ describe("order emails", () => {
         customerName: "Asha",
         items: [{ name: "Red Velvet", flavour: null, quantity: 2, lineTotalCents: 60000 }],
         subtotalCents: 60000,
-        deliveryFeeCents: null,
         totalCents: 60000,
-        awaitingQuote: false,
+        fulfilment: "pickup",
         bank,
       },
     });
@@ -242,9 +218,8 @@ describe("order emails", () => {
         customerName: "Asha",
         items: [{ name: "Red Velvet", flavour: null, quantity: 1, lineTotalCents: 30000 }],
         subtotalCents: 30000,
-        deliveryFeeCents: null,
         totalCents: 30000,
-        awaitingQuote: false,
+        fulfilment: "pickup",
         bank,
       },
     });
@@ -285,7 +260,6 @@ describe("order emails", () => {
         phone: "+1-868-555-0100",
         fulfilDate: "2026-11-28",
         totalCents: 60000,
-        awaitingQuote: false,
         adminUrl: `${SITE}/admin/orders/abc`,
       },
     });
@@ -559,15 +533,6 @@ describe("staff action emails", () => {
     return { sent, provider };
   }
 
-  const bank = {
-    bank: "Sample Bank",
-    account_name: "Butter and Scotch Ltd",
-    account_type: "Chequing",
-    transit: "00100",
-    account_no_same_bank: "1234567",
-    account_no_other_bank: "7654321",
-  };
-
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
   });
@@ -623,36 +588,6 @@ describe("staff action emails", () => {
     expect(sent[0].subject).toBe("Action needed: payment proof for BS-0021");
     expect(sent[0].html).toContain("The transfer was for the wrong amount");
     expect(sent[0].html).toContain("640.00");
-    expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
-  });
-
-  test("total_ready shows the formatted delivery fee and total, bank details and a link", async () => {
-    const { sent, provider } = recordingProvider();
-
-    const result = await sendTemplate(
-      { provider, log: async () => {} },
-      {
-        orderId: null,
-        template: "total_ready",
-        to: "asha@example.test",
-        data: {
-          orderNumber: "BS-0022",
-          token: TOKEN,
-          customerName: "Asha",
-          deliveryFeeCents: 5000,
-          totalCents: 65000,
-          bank,
-        },
-      },
-    );
-
-    expect(result).toEqual({ ok: true });
-    expect(sent[0].subject).toBe("Your total for BS-0022 is ready — pay to confirm");
-    expect(sent[0].html).toContain("50.00");
-    expect(sent[0].html).toContain("650.00");
-    expect(sent[0].html).toContain("Sample Bank");
-    expect(sent[0].html).toContain("Account # (from Scotiabank)");
-    expect(sent[0].html).toContain("Account # (from another bank)");
     expect(sent[0].html).toContain(`${SITE}/order/${TOKEN}`);
   });
 

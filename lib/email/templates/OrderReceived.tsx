@@ -8,9 +8,8 @@ export default function OrderReceived({
   customerName,
   items,
   subtotalCents,
-  deliveryFeeCents,
   totalCents,
-  awaitingQuote,
+  fulfilment,
   bank,
 }: OrderReceivedData) {
   return (
@@ -29,44 +28,27 @@ export default function OrderReceived({
 
       <p>Subtotal: {formatMoney(subtotalCents)}</p>
       <p>
-        Delivery:{" "}
-        {deliveryFeeCents !== null
-          ? formatMoney(deliveryFeeCents)
-          : awaitingQuote
-            ? "to be quoted"
-            : "pickup"}
+        <strong>{`Total: ${formatMoney(totalCents)}`}</strong>
       </p>
-      <p>
-        <strong>
-          {deliveryFeeCents === null && awaitingQuote
-            ? `Total: ${formatMoney(totalCents)} + delivery (we'll email your total)`
-            : `Total: ${formatMoney(totalCents)}`}
-        </strong>
-      </p>
-
-      {awaitingQuote ? (
+      {fulfilment === "delivery" && (
         <p>
-          We are checking the delivery fee for your area and will send you a quote.
-          Payment details will follow once you have it.
+          Once your order is confirmed we will contact you with your total delivery amount. Delivery
+          can be paid via cash or card upon delivery.
         </p>
-      ) : (
-        bank && (
-          <>
-            <p>
-              <strong>Pay by bank transfer</strong>
-            </p>
-            <ul style={{ paddingLeft: 20 }}>
-              <li>Bank: {bank.bank}</li>
-              <li>Account name: {bank.account_name}</li>
-              <li>Account type: {bank.account_type}</li>
-              <li>Transit: {bank.transit}</li>
-              <li>Account # (from Scotiabank): {bank.account_no_same_bank}</li>
-              <li>Account # (from another bank): {bank.account_no_other_bank}</li>
-            </ul>
-            <p>Please use your order number {orderNumber} as the payment reference.</p>
-          </>
-        )
       )}
+
+      <p>
+        <strong>Pay by bank transfer</strong>
+      </p>
+      <ul style={{ paddingLeft: 20 }}>
+        <li>Bank: {bank.bank}</li>
+        <li>Account name: {bank.account_name}</li>
+        <li>Account type: {bank.account_type}</li>
+        <li>Transit: {bank.transit}</li>
+        <li>Account # (from Scotiabank): {bank.account_no_same_bank}</li>
+        <li>Account # (from another bank): {bank.account_no_other_bank}</li>
+      </ul>
+      <p>Please use your order number {orderNumber} as the payment reference.</p>
 
       <p>
         <strong>Your order is not confirmed until we receive and check your payment.</strong>

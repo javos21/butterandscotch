@@ -69,7 +69,7 @@ describe.skipIf(!url || !anonKey || !serviceKey)(
     }
 
     let payOrder: { id: string; token: string };
-    let quoteOrder: { id: string; token: string };
+    let deliveryOrder: { id: string; token: string };
     let pickupOrder: { id: string; token: string };
     let bankSeed: unknown;
     let pickupSeed: string;
@@ -86,12 +86,9 @@ describe.skipIf(!url || !anonKey || !serviceKey)(
       pickupSeed = settings.data.pickup_info;
 
       payOrder = await insertOrder("pay", {});
-      quoteOrder = await insertOrder("quote", {
-        status: "awaiting_quote",
+      deliveryOrder = await insertOrder("delivery", {
         fulfilment: "delivery",
-        delivery_area_name: "Other area",
         delivery_address: "1 Test Street",
-        delivery_fee_cents: null,
         subtotal_cents: 14000,
         total_cents: 14000,
       });
@@ -143,16 +140,17 @@ describe.skipIf(!url || !anonKey || !serviceKey)(
       expect(serialized).not.toContain(payOrder.token);
     });
 
-    test("an order awaiting a quote shows no bank details and does not allow a proof upload", async () => {
-      const view = await getOrderView(quoteOrder.token);
+    test("a delivery order shows its address and an items-only total, with no fee field", async () => {
+      const view = await getOrderView(deliveryOrder.token);
       expect(view).not.toBeNull();
-      expect(view?.status).toBe("awaiting_quote");
-      expect(view?.bank).toBeNull();
-      expect(view?.canUploadProof).toBe(false);
+      expect(view?.status).toBe("awaiting_payment");
+      expect(view?.bank).toEqual(bankSeed);
+      expect(view?.canUploadProof).toBe(true);
       expect(view?.fulfilment).toBe("delivery");
-      expect(view?.areaName).toBe("Other area");
       expect(view?.address).toBe("1 Test Street");
-      expect(view?.deliveryFeeCents).toBeNull();
+      expect(view?.totalCents).toBe(14000);
+      expect(view).not.toHaveProperty("areaName");
+      expect(view).not.toHaveProperty("deliveryFeeCents");
     });
 
     test("a confirmed pickup order shows the pickup info and no bank details", async () => {

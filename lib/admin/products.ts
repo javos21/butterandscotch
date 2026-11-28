@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parsePriceCents } from "@/lib/admin/fee";
+import { parsePriceCents } from "@/lib/admin/price";
 
 /** What the product form sends. Price is the  text staff typed; flavours are one per line. */
 export type ProductInput = {

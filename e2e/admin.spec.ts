@@ -1,11 +1,9 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { formatFulfilDate } from "../lib/format-date";
-import { formatMoney } from "../lib/money";
 import {
   addToCart,
   openAdminOrder,
   pickAvailableDate,
-  placeOtherAreaOrder,
   placePickupOrder,
   serviceClient,
   showCalendarDate,
@@ -83,29 +81,6 @@ test("reject a proof", async ({ page }, testInfo) => {
   await expect(page.getByText("Your payment proof was not accepted")).toBeVisible();
   await expect(page.getByText("Amount doesn't match")).toBeVisible();
   await expect(page.getByLabel("Payment receipt")).toBeVisible();
-});
-
-test("set a delivery fee", async ({ page }, testInfo) => {
-  const order = await placeOtherAreaOrder(page, dayFor(3, testInfo));
-  await expect(page.getByText("Awaiting delivery quote — we'll email your total")).toBeVisible();
-
-  const admin = await page.context().newPage();
-  await signInAsStaff(admin);
-  await openAdminOrder(admin, order.orderNumber);
-
-  await admin.getByLabel("Delivery fee", { exact: true }).fill("45");
-  await admin.getByRole("button", { name: "Save fee and email total" }).click();
-  await expect(admin.getByText("Saved", { exact: true })).toBeVisible();
-
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Pay by bank transfer" })).toBeVisible();
-  await expect(page.getByText("Delivery fee").locator("xpath=following-sibling::dd")).toHaveText(formatMoney(4500));
-
-  const subtotalText = await page.getByText("Subtotal", { exact: true }).locator("xpath=following-sibling::dd").textContent();
-  const subtotalCents = Math.round(Number((subtotalText ?? "").replace(/[^\d.]/g, "")) * 100);
-  await expect(page.getByText("Total", { exact: true }).locator("xpath=following-sibling::dd")).toHaveText(
-    formatMoney(subtotalCents + 4500),
-  );
 });
 
 test("blocked date in settings", async ({ page }, testInfo) => {

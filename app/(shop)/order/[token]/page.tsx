@@ -25,7 +25,6 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
 
   const whatsappHref = waLink(order.whatsappNumber, `Order ${order.orderNumber}`);
   const isDelivery = order.fulfilment === "delivery";
-  const quoteOnly = isDelivery && order.deliveryFeeCents === null;
 
   return (
     <main className="mx-auto max-w-xl space-y-5 px-4 pb-6">
@@ -50,8 +49,6 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
           <dd>{isDelivery ? "Delivery" : "Pickup"}</dd>
           {isDelivery && (
             <>
-              <dt className="text-olive">Area</dt>
-              <dd>{order.areaName}</dd>
               <dt className="text-olive">Address</dt>
               <dd className="whitespace-pre-line">{order.address}</dd>
             </>
@@ -80,18 +77,6 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
             <dt>Subtotal</dt>
             <dd>{formatMoney(order.subtotalCents)}</dd>
           </div>
-          {isDelivery && quoteOnly && (
-            <div className="flex justify-between">
-              <dt>Delivery fee</dt>
-              <dd>We&apos;ll email your total</dd>
-            </div>
-          )}
-          {isDelivery && !quoteOnly && order.deliveryFeeCents !== null && (
-            <div className="flex justify-between">
-              <dt>Delivery fee</dt>
-              <dd>{formatMoney(order.deliveryFeeCents)}</dd>
-            </div>
-          )}
           {order.adjustmentsCents !== 0 && (
             <div className="flex justify-between">
               <dt>Adjustments</dt>
@@ -100,11 +85,7 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
           )}
           <div className="flex justify-between border-t border-olive-line pt-2 text-xl font-extrabold">
             <dt>Total</dt>
-            <dd>
-              {quoteOnly
-                ? `${formatMoney(order.totalCents)} + delivery (we'll email your total)`
-                : formatMoney(order.totalCents)}
-            </dd>
+            <dd>{formatMoney(order.totalCents)}</dd>
           </div>
         </dl>
       </section>
@@ -116,6 +97,13 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
           <h2 className="font-display text-2xl leading-tight text-crimson-deep">Upload proof of payment</h2>
           <ProofUploadForm token={token} />
         </section>
+      )}
+
+      {isDelivery && (
+        <p className="text-center text-base text-olive-ink">
+          Once your order is confirmed we will contact you with your total delivery amount. Delivery can be paid via
+          cash or card upon delivery.
+        </p>
       )}
 
       {order.pickupInfo && (

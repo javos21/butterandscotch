@@ -26,7 +26,6 @@ export const checkoutSchema = z.object({
     z.object({ type: z.literal("pickup") }),
     z.object({
       type: z.literal("delivery"),
-      areaId: z.guid(),
       address: z.string().trim().min(5).max(300),
     }),
   ]),
@@ -62,7 +61,7 @@ const FIELD_MESSAGES: Record<CheckoutField, string> = {
   policy: "Please accept the order policy to continue.",
   date: "Please choose a date.",
   lines: "Please check your cart and try again.",
-  fulfilment: "Please choose a delivery area.",
+  fulfilment: "Please choose pickup or delivery.",
 };
 
 /**

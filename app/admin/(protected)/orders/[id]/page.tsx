@@ -4,7 +4,6 @@ import { ChevronLeft, Download, Mail, MessageCircle } from "lucide-react";
 import { OrderActionsBar } from "@/components/admin/OrderActionsBar";
 import { ProofReviewCard } from "@/components/admin/ProofReviewCard";
 import { RequestProofAgainButton } from "@/components/admin/RequestProofAgainButton";
-import { SetFeeForm } from "@/components/admin/SetFeeForm";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { getAdminOrder } from "@/lib/admin/queries";
@@ -132,10 +131,6 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
           {order.fulfilment === "delivery" ? (
             <>
               <div>
-                <dt className="text-muted-foreground">Area</dt>
-                <dd className="font-medium">{order.areaName ?? "—"}</dd>
-              </div>
-              <div>
                 <dt className="text-muted-foreground">Address</dt>
                 <dd className="font-medium break-words">{order.address ?? "—"}</dd>
               </div>
@@ -191,14 +186,6 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               <dd className="tabular-nums">{formatMoney(order.adjustmentsCents)}</dd>
             </div>
           ) : null}
-          {order.fulfilment === "delivery" ? (
-            <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Delivery fee</dt>
-              <dd className="tabular-nums">
-                {order.deliveryFeeCents === null ? "To be set" : formatMoney(order.deliveryFeeCents)}
-              </dd>
-            </div>
-          ) : null}
           <div className="flex justify-between gap-3 border-t pt-2 text-base font-semibold">
             <dt>Total</dt>
             <dd className="tabular-nums">{formatMoney(order.totalCents)}</dd>
@@ -225,8 +212,6 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
           </section>
         )
       ) : null}
-
-      {order.status === "awaiting_quote" ? <SetFeeForm orderId={order.id} /> : null}
 
       <OrderActionsBar
         orderId={order.id}

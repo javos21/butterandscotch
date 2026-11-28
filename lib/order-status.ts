@@ -1,5 +1,4 @@
 export type OrderStatus =
-  | "awaiting_quote"
   | "awaiting_payment"
   | "proof_submitted"
   | "confirmed"
@@ -8,7 +7,6 @@ export type OrderStatus =
   | "cancelled";
 
 export const ORDER_STATUSES: readonly OrderStatus[] = [
-  "awaiting_quote",
   "awaiting_payment",
   "proof_submitted",
   "confirmed",
@@ -18,7 +16,6 @@ export const ORDER_STATUSES: readonly OrderStatus[] = [
 ] as const;
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
-  awaiting_quote: "Awaiting delivery quote",
   awaiting_payment: "Awaiting payment — not confirmed",
   proof_submitted: "Payment being checked",
   confirmed: "Confirmed",
@@ -28,6 +25,12 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 export class OrderStateError extends Error {}
+
+/** Reads a status string from the database. Throws for any value that is not a current status. */
+export function parseStatus(value: string): OrderStatus {
+  if ((ORDER_STATUSES as readonly string[]).includes(value)) return value as OrderStatus;
+  throw new OrderStateError(`Unknown order status: ${value}`);
+}
 
 /** A customer uploads (or replaces) payment proof. Only allowed while awaiting payment. */
 export function afterProofSubmitted(s: OrderStatus): OrderStatus {
@@ -51,7 +54,6 @@ export function paymentOpen(s: OrderStatus): boolean {
 export type StaffAction =
   | "confirm_proof"
   | "reject_proof"
-  | "set_fee"
   | "mark_ready"
   | "mark_completed"
   | "cancel";
@@ -59,7 +61,6 @@ export type StaffAction =
 const STAFF_ACTION_VERB: Record<StaffAction, string> = {
   confirm_proof: "confirm proof on",
   reject_proof: "reject proof on",
-  set_fee: "set the fee on",
   mark_ready: "mark ready",
   mark_completed: "mark completed",
   cancel: "cancel",
@@ -68,7 +69,6 @@ const STAFF_ACTION_VERB: Record<StaffAction, string> = {
 const STAFF_TRANSITIONS: Partial<Record<StaffAction, Partial<Record<OrderStatus, OrderStatus>>>> = {
   confirm_proof: { proof_submitted: "confirmed" },
   reject_proof: { proof_submitted: "awaiting_payment" },
-  set_fee: { awaiting_quote: "awaiting_payment" },
   mark_ready: { confirmed: "ready" },
   mark_completed: { ready: "completed", confirmed: "completed" },
 };

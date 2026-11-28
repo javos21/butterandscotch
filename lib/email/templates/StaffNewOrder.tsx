@@ -9,7 +9,6 @@ export default function StaffNewOrder({
   phone,
   fulfilDate,
   totalCents,
-  awaitingQuote,
   adminUrl,
 }: StaffNewOrderData) {
   return (
@@ -21,10 +20,7 @@ export default function StaffNewOrder({
         <li>Email: {email}</li>
         <li>WhatsApp: {phone}</li>
         <li>Date: {fulfilDate}</li>
-        <li>
-          Total: {formatMoney(totalCents)}
-          {awaitingQuote ? " (delivery quote needed)" : ""}
-        </li>
+        <li>Total: {formatMoney(totalCents)}</li>
       </ul>
       <p>
         <a href={adminUrl}>Open the order</a>

@@ -5,7 +5,6 @@ import {
   markCompleted,
   markReady,
   requestProofAgain,
-  setDeliveryFee,
   type AdminOrder,
   type AdminOrderRepo,
   type OrderActionDeps,
@@ -19,7 +18,6 @@ const NOW = new Date("2026-11-24T14:00:00Z");
 const ORDER_ID = "00000000-0000-0000-0000-00000000b0b0";
 const STAFF_ID = "00000000-0000-0000-0000-0000000005a5";
 const REFRESH_ERROR = "Order was updated — refresh";
-const FEE_ERROR = "Enter a fee between 0 and 1,000";
 const REASON_ERROR = "Please give a reason (3–300 characters)";
 const SAME_DATE_ERROR = "That's already the order date.";
 const BANK: BankDetails = {
@@ -66,18 +64,17 @@ function baseOrder(overrides: Partial<AdminOrder> = {}): AdminOrder {
     accessToken: "tok_abc123",
     customerName: "Asha Mohan",
     email: "asha@example.test",
-    status: "awaiting_quote",
+    status: "awaiting_payment",
     fulfilment: "delivery",
     fulfilDate: "2026-11-28",
     subtotalCents: 7800,
     adjustmentsCents: 0,
-    deliveryFeeCents: null,
     totalCents: 7800,
     ...overrides,
   };
 }
 
-function freshState(status: OrderStatus = "awaiting_quote", overrides: Partial<AdminOrder> = {}): State {
+function freshState(status: OrderStatus = "awaiting_payment", overrides: Partial<AdminOrder> = {}): State {
   return {
     order: baseOrder({ status, ...overrides }),
     windowStartedAt: null,
@@ -103,7 +100,6 @@ function fakeRepo(state: State): AdminOrderRepo {
       if (state.updateThrows) throw new Error("connection reset");
       if (orderId !== state.order.id || state.order.status !== expectStatus) return false;
       state.order.status = set.status;
-      if (set.deliveryFeeCents !== undefined) state.order.deliveryFeeCents = set.deliveryFeeCents;
       if (set.totalCents !== undefined) state.order.totalCents = set.totalCents;
       if (set.paymentWindowStartedAt !== undefined) {
         state.windowStartedAt = set.paymentWindowStartedAt;
@@ -156,70 +152,6 @@ function deps(state: State, email: EmailDeps): OrderActionDeps {
     getPickupInfo: async () => PICKUP_INFO,
   };
 }
-
-describe("setDeliveryFee", () => {
-  test("sets the fee, the total, the status and the payment window, then emails the total", async () => {
-    const state = freshState("awaiting_quote");
-    const mail = recordingEmail();
-    const result = await setDeliveryFee({ orderId: ORDER_ID, feeCents: 1200 }, deps(state, mail.email));
-
-    expect(result).toEqual({ ok: true, emailFailed: false });
-    expect(state.order.deliveryFeeCents).toBe(1200);
-    expect(state.order.totalCents).toBe(9000);
-    expect(state.order.status).toBe("awaiting_payment");
-    expect(state.windowStartedAt).toBe(NOW.toISOString());
-    expect(state.events).toEqual([
-      { kind: "fee_set", detail: { deliveryFeeCents: 1200, totalCents: 9000 }, staffId: STAFF_ID },
-    ]);
-    expect(mail.sent).toHaveLength(1);
-    expect(mail.sent[0].to).toBe("asha@example.test");
-    expect(mail.sent[0].subject).toBe("Your total for BS-0142 is ready — pay to confirm");
-    expect(mail.sent[0].html).toContain(BANK.account_no_same_bank);
-  });
-
-  test("is refused when the order is not awaiting a quote", async () => {
-    const state = freshState("confirmed");
-    const mail = recordingEmail();
-    const result = await setDeliveryFee({ orderId: ORDER_ID, feeCents: 1200 }, deps(state, mail.email));
-
-    expect(result).toEqual({ error: "Can't set the fee on an order that is confirmed" });
-    expect(state.order.status).toBe("confirmed");
-    expect(state.events).toHaveLength(0);
-    expect(mail.sent).toHaveLength(0);
-  });
-
-  test.each([-1, 100001, 12.5, Number.NaN])("refuses the fee %s", async (feeCents) => {
-    const state = freshState("awaiting_quote");
-    const mail = recordingEmail();
-    const result = await setDeliveryFee({ orderId: ORDER_ID, feeCents }, deps(state, mail.email));
-
-    expect(result).toEqual({ error: FEE_ERROR });
-    expect(state.order.status).toBe("awaiting_quote");
-  });
-
-  test("reports emailFailed when the email does not go out, and keeps the saved fee", async () => {
-    const state = freshState("awaiting_quote");
-    const mail = recordingEmail({ fail: true });
-    const result = await setDeliveryFee({ orderId: ORDER_ID, feeCents: 500 }, deps(state, mail.email));
-
-    expect(result).toEqual({ ok: true, emailFailed: true });
-    expect(state.order.status).toBe("awaiting_payment");
-    expect(mail.logs[0].error).toContain("Brevo 500");
-  });
-
-  test("refreshes when a concurrent change moved the order first", async () => {
-    const state = freshState("awaiting_quote");
-    state.raceBeforeUpdate = () => {
-      state.order.status = "cancelled";
-    };
-    const mail = recordingEmail();
-    const result = await setDeliveryFee({ orderId: ORDER_ID, feeCents: 500 }, deps(state, mail.email));
-
-    expect(result).toEqual({ error: REFRESH_ERROR });
-    expect(state.events).toHaveLength(0);
-    expect(mail.sent).toHaveLength(0);
-  });
-});
 
 describe("changeDate", () => {
   const NEW_DATE = "2026-12-01";

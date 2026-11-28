@@ -19,5 +19,3 @@ export type Settings = Omit<Tables["settings"]["Row"], "bank_details"> & {
 export type Section = Tables["sections"]["Row"];
 
 export type Item = Tables["items"]["Row"];
-
-export type DeliveryArea = Tables["delivery_areas"]["Row"];

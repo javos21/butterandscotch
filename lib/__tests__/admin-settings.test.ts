@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   blockDates,
-  saveArea,
   settingsPatchSchema,
   unblockDate,
   updateSettings,
@@ -31,7 +30,6 @@ const BANK = {
 
 type Calls = {
   settingsWrites: Record<string, unknown>[];
-  areaSaves: Record<string, unknown>[];
   upserts: { date: string; note: string | null }[][];
   deletes: string[];
 };
@@ -40,11 +38,10 @@ function makeRepo(
   options: {
     policyText?: string;
     policyVersion?: number;
-    otherActiveAreas?: number;
     closeDates?: { order_close_date: string; last_fulfilment_date: string };
   } = {},
 ) {
-  const calls: Calls = { settingsWrites: [], areaSaves: [], upserts: [], deletes: [] };
+  const calls: Calls = { settingsWrites: [], upserts: [], deletes: [] };
   const repo: SettingsRepo = {
     async getPolicy() {
       return {
@@ -60,12 +57,6 @@ function makeRepo(
     },
     async updateSettings(values) {
       calls.settingsWrites.push(values);
-    },
-    async countActiveAreas() {
-      return options.otherActiveAreas ?? 2;
-    },
-    async saveArea(area) {
-      calls.areaSaves.push(area);
     },
     async upsertBlockedDates(rows) {
       calls.upserts.push(rows);
@@ -185,49 +176,6 @@ describe("updateSettings", () => {
     const { deps } = makeRepo();
     const result = await updateSettings({ notify_email: "not-an-email" }, deps);
     expect(result).toEqual({ error: "Enter a valid notification email", field: "notify_email" });
-  });
-});
-
-describe("saveArea", () => {
-  const area = { id: "area-1", name: "Port of Spain", feeCents: 2500, active: true, sort: 1 };
-
-  test("saves an active area with its fee in cents", async () => {
-    const { deps, calls } = makeRepo();
-    const result = await saveArea(area, deps);
-    expect(result).toEqual({ ok: true });
-    expect(calls.areaSaves[0]).toEqual({
-      id: "area-1",
-      name: "Port of Spain",
-      fee_cents: 2500,
-      active: true,
-      sort: 1,
-    });
-  });
-
-  test("keeps a null fee for areas where we'll quote", async () => {
-    const { deps, calls } = makeRepo();
-    await saveArea({ ...area, feeCents: null }, deps);
-    expect(calls.areaSaves[0]).toMatchObject({ fee_cents: null });
-  });
-
-  test("refuses to switch off the last active area", async () => {
-    const { deps, calls } = makeRepo({ otherActiveAreas: 0 });
-    const result = await saveArea({ ...area, active: false }, deps);
-    expect(result).toEqual({ error: "Keep at least one delivery area switched on", field: "active" });
-    expect(calls.areaSaves).toHaveLength(0);
-  });
-
-  test("allows switching off an area when another stays active", async () => {
-    const { deps, calls } = makeRepo({ otherActiveAreas: 1 });
-    const result = await saveArea({ ...area, active: false }, deps);
-    expect(result).toEqual({ ok: true });
-    expect(calls.areaSaves[0]).toMatchObject({ active: false });
-  });
-
-  test("refuses a fee above 1,000", async () => {
-    const { deps } = makeRepo();
-    const result = await saveArea({ ...area, feeCents: 100_001 }, deps);
-    expect(result).toEqual({ error: "Enter a fee between 0 and 1,000", field: "feeCents" });
   });
 });
 

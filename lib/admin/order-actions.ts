@@ -6,8 +6,6 @@ import type { BankDetails } from "@/lib/types";
 const ORDER_NOT_FOUND = "Order not found";
 const REFRESH_ERROR = "Order was updated — refresh";
 const SAVE_ERROR = "Couldn't save the change — try again";
-const FEE_ERROR = "Enter a fee between 0 and 1,000";
-const FEE_MAX_CENTS = 100_000;
 const REASON_ERROR = "Please give a reason (3–300 characters)";
 const REASON_MIN = 3;
 const REASON_MAX = 300;
@@ -34,13 +32,11 @@ export type AdminOrder = {
   fulfilDate: string;
   subtotalCents: number;
   adjustmentsCents: number;
-  deliveryFeeCents: number | null;
   totalCents: number;
 };
 
 export type OrderUpdate = {
   status: OrderStatus;
-  deliveryFeeCents?: number;
   totalCents?: number;
   /** Restarts the payment window and clears the payment reminder. */
   paymentWindowStartedAt?: string;
@@ -76,7 +72,6 @@ export type OrderActionDeps = {
 
 export type OrderActionResult = { ok: true; emailFailed?: boolean } | { error: string };
 
-export type SetDeliveryFeeInput = { orderId: string; feeCents: number };
 export type ChangeDateInput = { orderId: string; newDate: string; overrideCap: boolean };
 export type MarkReadyInput = { orderId: string; notify: boolean };
 export type MarkCompletedInput = { orderId: string };
@@ -140,43 +135,6 @@ async function finish(deps: OrderActionDeps, send: () => Promise<boolean>): Prom
   }
   const emailFailed = await send();
   return { ok: true, emailFailed };
-}
-
-/** Sets the delivery fee on an awaiting-quote order, opens the payment window and emails the total. */
-export async function setDeliveryFee(input: SetDeliveryFeeInput, deps: OrderActionDeps): Promise<OrderActionResult> {
-  const { feeCents } = input;
-  if (!Number.isInteger(feeCents) || feeCents < 0 || feeCents > FEE_MAX_CENTS) return { error: FEE_ERROR };
-
-  const found = await advance(deps.repo, input.orderId, "set_fee");
-  if ("error" in found) return found;
-  const { order, next } = found;
-
-  const totalCents = order.subtotalCents + feeCents + order.adjustmentsCents;
-  const failure = await saveOrder(deps.repo, order, {
-    status: next,
-    deliveryFeeCents: feeCents,
-    totalCents,
-    paymentWindowStartedAt: deps.now().toISOString(),
-  });
-  if (failure) return { error: failure };
-
-  await recordEvent(deps.repo, order.id, "fee_set", { deliveryFeeCents: feeCents, totalCents }, deps.staff.userId);
-
-  return finish(deps, async () => {
-    try {
-      const bank = await deps.getBank();
-      const sent = await sendTemplate(deps.email, {
-        orderId: order.id,
-        template: "total_ready",
-        to: order.email,
-        data: { ...customerBase(order), deliveryFeeCents: feeCents, totalCents, bank },
-      });
-      return !sent.ok;
-    } catch (err) {
-      console.error("[order-actions] total_ready email failed", order.id, err);
-      return true;
-    }
-  });
 }
 
 /**

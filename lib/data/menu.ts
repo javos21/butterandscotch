@@ -1,18 +1,16 @@
 import { createPublicSupabase } from "@/lib/supabase/public";
-import type { DeliveryArea, Item, Section } from "@/lib/types";
+import type { Item, Section } from "@/lib/types";
 
-/** Sections in display order, each with its active items, and the active delivery areas. */
+/** Sections in display order, each with its active items. */
 export async function getMenu(): Promise<{
   sections: (Section & { items: Item[] })[];
-  areas: DeliveryArea[];
 }> {
   const db = createPublicSupabase();
-  const [sectionsRes, itemsRes, areasRes] = await Promise.all([
+  const [sectionsRes, itemsRes] = await Promise.all([
     db.from("sections").select("*").order("sort"),
     db.from("items").select("*").eq("active", true).order("sort"),
-    db.from("delivery_areas").select("*").eq("active", true).order("sort"),
   ]);
-  for (const res of [sectionsRes, itemsRes, areasRes]) {
+  for (const res of [sectionsRes, itemsRes]) {
     if (res.error) throw new Error(res.error.message);
   }
 
@@ -28,7 +26,6 @@ export async function getMenu(): Promise<{
       ...section,
       items: itemsBySection.get(section.id) ?? [],
     })),
-    areas: areasRes.data ?? [],
   };
 }
 

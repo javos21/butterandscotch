@@ -104,7 +104,6 @@ export default async function MenuPage() {
             </li>
           ))}
         </ol>
-        <p className="text-center text-base text-olive-ink">Delivery fee included before checkout.</p>
         <p className="rounded-2xl bg-crimson px-5 py-3.5 text-center text-base font-bold leading-snug text-cream sm:text-lg">
           Your order is confirmed after payment proof is checked.
         </p>

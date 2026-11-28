@@ -22,7 +22,6 @@ export default async function CheckoutPage() {
 
   return (
     <CheckoutForm
-      areas={menu.areas}
       allergenNotes={allergenNotes}
       leadDays={settings.lead_time_days}
       today={today}

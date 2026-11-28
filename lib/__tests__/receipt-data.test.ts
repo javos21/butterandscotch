@@ -6,8 +6,6 @@ const delivery: ReceiptOrder = {
   customerName: "Asha Mohan",
   fulfilDate: "2026-11-28",
   fulfilment: "delivery",
-  areaName: "Port of Spain",
-  deliveryFeeCents: 3000,
   adjustmentsCents: 0,
   totalCents: 9800,
   items: [
@@ -17,10 +15,10 @@ const delivery: ReceiptOrder = {
 };
 
 describe("buildReceiptData", () => {
-  test("two lines and a delivery fee: the total echoes the order total", () => {
+  test("two lines: the total echoes the order total, with no delivery fee line", () => {
     const data = buildReceiptData(delivery, "2026-11-24", "+1 868 555 0100");
     expect(data.totalCents).toBe(9800);
-    expect(data.deliveryFeeCents).toBe(3000);
+    expect(data).not.toHaveProperty("deliveryFeeCents");
     expect(data.lines).toHaveLength(2);
     expect(data.paidOn).toBe("2026-11-24");
     expect(data.whatsappNumber).toBe("+1 868 555 0100");
@@ -32,14 +30,10 @@ describe("buildReceiptData", () => {
     expect(data.lines[1]).toMatchObject({ name: "Mini Cookie Bag", flavour: "Half & Half", quantity: 1 });
   });
 
-  test("a pickup order has no area name even when the order stores one", () => {
-    const data = buildReceiptData(
-      { ...delivery, fulfilment: "pickup", areaName: "Port of Spain", deliveryFeeCents: null },
-      "2026-11-24",
-      "",
-    );
-    expect(data.areaName).toBeNull();
+  test("a pickup order stays a pickup and carries no delivery fee", () => {
+    const data = buildReceiptData({ ...delivery, fulfilment: "pickup" }, "2026-11-24", "");
     expect(data.fulfilment).toBe("pickup");
-    expect(data.deliveryFeeCents).toBeNull();
+    expect(data).not.toHaveProperty("deliveryFeeCents");
+    expect(data).not.toHaveProperty("areaName");
   });
 });

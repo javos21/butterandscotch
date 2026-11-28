@@ -201,19 +201,6 @@ describe("submitProof", () => {
     expect(email.send).not.toHaveBeenCalled();
   });
 
-  test("an order awaiting a quote is refused with the quote message", async () => {
-    const fake = fakeRepo({ status: "awaiting_quote" });
-    const email = fakeEmail();
-    const result = await submitProof(input(), {
-      repo: fake.repo,
-      email: email.deps,
-      siteUrl: SITE,
-    });
-    expect(result).toEqual({ error: "We'll email your total before you pay." });
-    expect(fake.uploads).toHaveLength(0);
-    expect(fake.upserts).toHaveLength(0);
-  });
-
   test("a proof after the payment is confirmed is refused", async () => {
     const fake = fakeRepo({ status: "confirmed" });
     const email = fakeEmail();

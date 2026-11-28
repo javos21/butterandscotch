@@ -11,12 +11,10 @@ const data: ReceiptData = {
   paidOn: "2026-11-24",
   fulfilDate: "2026-11-28",
   fulfilment: "pickup",
-  areaName: null,
   lines: [
     { name: "Red Velvet Cupcakes", flavour: null, quantity: 6, unitPriceCents: 1000, lineTotalCents: 6000 },
     { name: "Mini Cookie Bag", flavour: "Half & Half", quantity: 1, unitPriceCents: 1800, lineTotalCents: 1800 },
   ],
-  deliveryFeeCents: null,
   adjustmentsCents: 0,
   totalCents: 7800,
   whatsappNumber: "+1 868 555 0100",

@@ -8,7 +8,7 @@ import {
   type OrderRepo,
 } from "@/lib/orders/create-order";
 import type { EmailDeps, EmailLogEntry } from "@/lib/email/types";
-import type { BankDetails, DeliveryArea, Item, Settings } from "@/lib/types";
+import type { BankDetails, Item, Settings } from "@/lib/types";
 
 const SITE = "https://shop.test";
 const NOW = new Date("2026-11-23T12:00:00Z");
@@ -18,8 +18,6 @@ const COOKIE_JAR_ID = "22222222-2222-4222-8222-222222222222";
 const MINI_BAG_ID = "33333333-3333-4333-8333-333333333333";
 const INACTIVE_ID = "44444444-4444-4444-8444-444444444444";
 const UNKNOWN_ID = "55555555-5555-4555-8555-555555555555";
-const AREA_FEE_ID = "66666666-6666-4666-8666-666666666666";
-const AREA_QUOTE_ID = "77777777-7777-4777-8777-777777777777";
 const KEY = "idem-0001-abcdefgh";
 
 const BANK: BankDetails = {
@@ -68,21 +66,6 @@ const miniBag = makeItem({
 });
 const inactive = makeItem({ id: INACTIVE_ID, name: "Old Sponge", active: false });
 
-const areaFee: DeliveryArea = {
-  id: AREA_FEE_ID,
-  name: "Port of Spain",
-  fee_cents: 4000,
-  active: true,
-  sort: 0,
-};
-const areaQuote: DeliveryArea = {
-  id: AREA_QUOTE_ID,
-  name: "Other area",
-  fee_cents: null,
-  active: true,
-  sort: 1,
-};
-
 function makeSettings(overrides: Partial<Settings> = {}): Settings {
   return {
     id: 1,
@@ -118,12 +101,9 @@ function checkout(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function fakeRepo(
-  opts: { settings?: Partial<Settings>; items?: Item[]; areas?: DeliveryArea[] } = {},
-) {
+function fakeRepo(opts: { settings?: Partial<Settings>; items?: Item[] } = {}) {
   const settings = makeSettings(opts.settings);
   const items = opts.items ?? [redVelvet, cookieJar, miniBag, inactive];
-  const areas = opts.areas ?? [areaFee, areaQuote];
   const byKey = new Map<string, OrderRef>();
   let seq = 0;
 
@@ -142,7 +122,6 @@ function fakeRepo(
   const repo: OrderRepo = {
     getSettings: vi.fn(async () => settings),
     getItems: vi.fn(async (ids: string[]) => items.filter((item) => ids.includes(item.id))),
-    getArea: vi.fn(async (id: string) => areas.find((area) => area.id === id) ?? null),
     findByIdempotencyKey: vi.fn(async (key: string) => byKey.get(key) ?? null),
     insertOrder,
   };
@@ -185,7 +164,6 @@ describe("createOrder", () => {
       status: "awaiting_payment",
       subtotal_cents: 60000,
       total_cents: 60000,
-      delivery_fee_cents: null,
       payment_window_started_at: NOW.toISOString(),
       fulfilment: "pickup",
       fulfil_date: "2026-11-28",
@@ -206,49 +184,39 @@ describe("createOrder", () => {
     expect(customer?.html).toContain("Sample Bank");
   });
 
-  test("adds the area fee", async () => {
-    const { repo, insertOrder } = fakeRepo();
-    const { deps } = fakeEmail();
-
-    await createOrder(
-      checkout({
-        fulfilment: { type: "delivery", areaId: AREA_FEE_ID, address: "12 Frederick St, Port of Spain" },
-      }),
-      { repo, email: deps, now: () => NOW },
-    );
-
-    expect(insertOrder.mock.calls[0][0]).toMatchObject({
-      status: "awaiting_payment",
-      subtotal_cents: 60000,
-      delivery_fee_cents: 4000,
-      total_cents: 64000,
-      delivery_area_id: AREA_FEE_ID,
-      delivery_area_name: "Port of Spain",
-      delivery_address: "12 Frederick St, Port of Spain",
-      payment_window_started_at: NOW.toISOString(),
-    });
-  });
-
-  test("other area waits for a quote", async () => {
+  test("delivery order total excludes any fee", async () => {
     const { repo, insertOrder } = fakeRepo();
     const { deps, sent } = fakeEmail();
 
-    await createOrder(
+    const result = await createOrder(
       checkout({
-        fulfilment: { type: "delivery", areaId: AREA_QUOTE_ID, address: "Lot 9, Arima Road" },
+        fulfilment: { type: "delivery", address: "12 Frederick St, Port of Spain" },
+        lines: [
+          { itemId: RED_VELVET_ID, flavour: null, quantity: 1 },
+          { itemId: MINI_BAG_ID, flavour: "Half & Half", quantity: 1 },
+        ],
       }),
       { repo, email: deps, now: () => NOW },
     );
 
-    expect(insertOrder.mock.calls[0][0]).toMatchObject({
-      status: "awaiting_quote",
-      delivery_fee_cents: null,
-      total_cents: 60000,
-      payment_window_started_at: null,
+    expect(result).toHaveProperty("token");
+    const [order] = insertOrder.mock.calls[0];
+    expect(order).toMatchObject({
+      status: "awaiting_payment",
+      fulfilment: "delivery",
+      subtotal_cents: 34500,
+      total_cents: 34500,
+      delivery_address: "12 Frederick St, Port of Spain",
+      payment_window_started_at: NOW.toISOString(),
     });
+    expect(order).not.toHaveProperty("delivery_fee_cents");
+    expect(order).not.toHaveProperty("delivery_area_id");
+    expect(order).not.toHaveProperty("delivery_area_name");
     const customer = sent.find((msg) => msg.to === "asha@example.test");
-    expect(customer?.subject).toBe("Order BS-0001 received — awaiting delivery quote");
-    expect(customer?.html).not.toContain("Sample Bank");
+    expect(customer?.subject).toBe("Order BS-0001 received — awaiting payment");
+    expect(customer?.html).toContain("Sample Bank");
+    expect(customer?.html).toContain("Once your order is confirmed we will contact you with your total delivery amount.");
+    expect(customer?.html).toContain("Delivery can be paid via cash or card upon delivery.");
   });
 
   test("refuses a date inside the lead time", async () => {
@@ -460,7 +428,7 @@ describe("createOrder", () => {
   test("a short name and a short delivery address are each refused against their own field", async () => {
     const { repo, insertOrder } = fakeRepo();
     const { deps } = fakeEmail();
-    const delivery = { type: "delivery", areaId: AREA_FEE_ID, address: "1 A" };
+    const delivery = { type: "delivery", address: "1 A" };
 
     expect(
       await createOrder(checkout({ name: "A" }), { repo, email: deps, now: () => NOW }),
@@ -497,19 +465,6 @@ describe("createOrder", () => {
     expect(insertOrder).toHaveBeenCalledTimes(1);
     expect(sent.map((msg) => msg.to)).toEqual([]);
     expect(errorLog).toHaveBeenCalled();
-  });
-
-  test("an unknown delivery area is refused against the fulfilment field", async () => {
-    const { repo, insertOrder } = fakeRepo();
-    const { deps } = fakeEmail();
-
-    const result = await createOrder(
-      checkout({ fulfilment: { type: "delivery", areaId: UNKNOWN_ID, address: "12 Frederick St" } }),
-      { repo, email: deps, now: () => NOW },
-    );
-
-    expect(result).toEqual({ field: "fulfilment", error: "Please choose a delivery area." });
-    expect(insertOrder).not.toHaveBeenCalled();
   });
 
   test("emails are deferred when a defer hook is given", async () => {

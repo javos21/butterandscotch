@@ -56,7 +56,7 @@ test("lead time days cannot be picked", async ({ page }) => {
   await expect(page.getByText(/^Your date:/)).toHaveCount(0);
 });
 
-test("other area waits for a quote", async ({ page }) => {
+test("a delivery order shows the delivery note and no fee", async ({ page }) => {
   await page.goto("/");
   await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
@@ -64,14 +64,13 @@ test("other area waits for a quote", async ({ page }) => {
 
   await fillContact(page);
   await page.getByLabel("Delivery", { exact: true }).check();
-  await page.getByLabel("Delivery area").selectOption({ label: "Other area (we'll contact you)" });
   await page.getByLabel("Delivery address").fill("1 Test Street, Port of Spain");
   await page.locator('[data-state="available"]').first().click();
   await acceptPolicyAndAllergies(page);
   await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
 
   await expect(page).toHaveURL(/\/order\//);
-  await expect(page.getByText("Awaiting delivery quote — we'll email your total")).toBeVisible();
+  await expect(page.getByText("Once your order is confirmed we will contact you with your total delivery amount.")).toBeVisible();
   await expect(page.locator("body")).not.toContainText("Transit");
 });
 
