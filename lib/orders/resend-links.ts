@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { sendTemplate, type EmailDeps } from "@/lib/email/send";
+import { normaliseEmail } from "@/lib/customers/normalise-email";
+import { FIND_ORDER_RESPONSE } from "@/lib/orders/find-order-response";
 
 export type ResendOrder = {
   orderNumber: string;
@@ -20,18 +22,18 @@ const emailSchema = z.email();
 
 /**
  * Emails a customer the private links to their orders.
- * Always returns ok, whether or not the email has orders, so the response never reveals
- * which addresses have ordered. Sends one order_links email when orders exist.
+ * Always returns FIND_ORDER_RESPONSE, whether or not the email has orders, so the response never
+ * reveals which addresses have ordered. Sends one order_links email when orders exist.
  */
-export async function resendLinks(
+export async function resendOrderLinks(
   email: string,
   deps: ResendLinksDeps,
-): Promise<{ ok: true }> {
-  const normalised = email.trim().toLowerCase();
-  if (!emailSchema.safeParse(normalised).success) return { ok: true };
+): Promise<typeof FIND_ORDER_RESPONSE> {
+  const normalised = normaliseEmail(email);
+  if (!emailSchema.safeParse(normalised).success) return FIND_ORDER_RESPONSE;
 
   const orders = await deps.repo.findOrdersByEmail(normalised);
-  if (orders.length === 0) return { ok: true };
+  if (orders.length === 0) return FIND_ORDER_RESPONSE;
 
   await sendTemplate(deps.email, {
     orderId: null,
@@ -47,5 +49,5 @@ export async function resendLinks(
     },
   });
 
-  return { ok: true };
+  return FIND_ORDER_RESPONSE;
 }

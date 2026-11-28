@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatFulfilDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/money";
 import { getOrderView } from "@/lib/orders/get-order";
+import { orderQuestionText } from "@/lib/orders/order-question";
 import { waLink } from "@/lib/phone";
 import { hasReceipt } from "@/lib/receipt/receipt-data";
 
@@ -23,7 +24,7 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
   const order = await getOrderView(token);
   if (!order) notFound();
 
-  const whatsappHref = waLink(order.whatsappNumber, `Order ${order.orderNumber}`);
+  const whatsappHref = waLink(order.whatsappNumber, orderQuestionText(order.orderNumber));
   const isDelivery = order.fulfilment === "delivery";
 
   return (

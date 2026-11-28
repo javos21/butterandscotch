@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { resendLinks, type ResendLinksDeps, type ResendOrder } from "@/lib/orders/resend-links";
+import { resendOrderLinks, type ResendLinksDeps, type ResendOrder } from "@/lib/orders/resend-links";
+import { FIND_ORDER_RESPONSE } from "@/lib/orders/find-order-response";
 import type { EmailDeps, EmailLogEntry } from "@/lib/email/send";
 
 const SITE = "https://shop.test";
@@ -39,22 +40,22 @@ const ASHA_ORDERS: ResendOrder[] = [
   },
 ];
 
-describe("resendLinks", () => {
+describe("resendOrderLinks", () => {
   test("an unknown email returns ok and sends nothing", async () => {
     const { deps, send } = fakeDeps([]);
 
-    const result = await resendLinks("nobody@example.test", deps);
+    const result = await resendOrderLinks("nobody@example.test", deps);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(FIND_ORDER_RESPONSE);
     expect(send).not.toHaveBeenCalled();
   });
 
   test("a known email with 2 orders sends one email containing both links", async () => {
     const { deps, send } = fakeDeps(ASHA_ORDERS);
 
-    const result = await resendLinks("asha@example.test", deps);
+    const result = await resendOrderLinks("asha@example.test", deps);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(FIND_ORDER_RESPONSE);
     expect(send).toHaveBeenCalledTimes(1);
     const msg = send.mock.calls[0][0];
     expect(msg.to).toBe("asha@example.test");
@@ -70,7 +71,7 @@ describe("resendLinks", () => {
   test("each order's fulfilment date reaches the email", async () => {
     const { deps, send } = fakeDeps(ASHA_ORDERS);
 
-    await resendLinks("asha@example.test", deps);
+    await resendOrderLinks("asha@example.test", deps);
 
     const msg = send.mock.calls[0][0];
     expect(msg.html).toContain("Saturday, 5 December 2026");
@@ -80,9 +81,9 @@ describe("resendLinks", () => {
   test("an invalid email returns ok and sends nothing", async () => {
     const { deps, findOrdersByEmail, send } = fakeDeps(ASHA_ORDERS);
 
-    const result = await resendLinks("not-an-email", deps);
+    const result = await resendOrderLinks("not-an-email", deps);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(FIND_ORDER_RESPONSE);
     expect(findOrdersByEmail).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
   });
@@ -90,9 +91,9 @@ describe("resendLinks", () => {
   test("uppercase and whitespace input finds the orders", async () => {
     const { deps, findOrdersByEmail, send } = fakeDeps(ASHA_ORDERS);
 
-    const result = await resendLinks("  ASHA@Example.TEST \n", deps);
+    const result = await resendOrderLinks("  ASHA@Example.TEST \n", deps);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(FIND_ORDER_RESPONSE);
     expect(findOrdersByEmail).toHaveBeenCalledWith("asha@example.test");
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0][0].to).toBe("asha@example.test");
