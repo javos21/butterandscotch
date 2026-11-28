@@ -109,7 +109,7 @@ export function CheckoutForm({
       date: date ?? "",
       allergies,
       notes: notes.trim() || undefined,
-      marketingOptIn,
+      broadcastOptIn: marketingOptIn,
       acceptPolicy,
       idempotencyKey,
       lines: lines.map((line) => ({

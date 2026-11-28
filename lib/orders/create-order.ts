@@ -29,7 +29,8 @@ export type NewOrder = {
   fulfil_date: string;
   allergies: string;
   notes: string | null;
-  marketing_opt_in: boolean;
+  /** Stored on the customer record by create_order_with_items, and on the order as the box was ticked. */
+  broadcast_opt_in: boolean;
   subtotal_cents: number;
   total_cents: number;
   status: "awaiting_payment";
@@ -221,7 +222,7 @@ export async function createOrder(
         fulfil_date: checkout.date,
         allergies: checkout.allergies,
         notes: checkout.notes || null,
-        marketing_opt_in: checkout.marketingOptIn,
+        broadcast_opt_in: checkout.broadcastOptIn,
         subtotal_cents: subtotalCents,
         total_cents: totalCents,
         policy_version: settings.policy_version,

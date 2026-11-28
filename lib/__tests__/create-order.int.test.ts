@@ -32,7 +32,7 @@ describe.skipIf(!url || !serviceKey)("order repo against local Supabase", () => 
       fulfil_date: fulfilDate,
       allergies: "None",
       notes: null,
-      marketing_opt_in: false,
+      broadcast_opt_in: false,
       subtotal_cents: 1000,
       total_cents: 1000,
       status: "awaiting_payment",

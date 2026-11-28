@@ -20,7 +20,7 @@ describe("checkoutSchema", () => {
     const parsed = checkoutSchema.parse(ok);
     expect(parsed.email).toBe("ana@example.com");
     expect(parsed.phone).toBe("+1-868-123-4567");
-    expect(parsed.marketingOptIn).toBe(false);
+    expect(parsed.broadcastOptIn).toBe(false);
   });
 
   test("rejects blank allergies", () => {

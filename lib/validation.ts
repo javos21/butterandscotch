@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normaliseEmail } from "@/lib/customers/normalise-email";
 import { normalisePhone } from "@/lib/phone";
 
 export const PHONE_MESSAGE = "Please enter a valid WhatsApp number";
@@ -11,9 +12,8 @@ const lineSchema = z.object({
 
 export const checkoutSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  email: z
-    .email()
-    .transform((value) => value.toLowerCase()),
+  // Normalise first, so a stray space around a valid address does not fail the check.
+  email: z.string().transform(normaliseEmail).pipe(z.email()),
   phone: z.string().transform((value, ctx) => {
     const normalised = normalisePhone(value);
     if (!normalised) {
@@ -32,7 +32,7 @@ export const checkoutSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   allergies: z.string().trim().min(1).max(500),
   notes: z.string().trim().max(1000).optional(),
-  marketingOptIn: z.boolean().default(false),
+  broadcastOptIn: z.boolean().default(false),
   acceptPolicy: z.literal(true),
   idempotencyKey: z.string().min(16).max(64),
   lines: z.array(lineSchema).min(1).max(30),
