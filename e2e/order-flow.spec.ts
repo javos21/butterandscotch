@@ -10,7 +10,7 @@ import {
 
 test("pickup order to proof", async ({ page }) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await addToCart(page, "Red Velvet Cupcakes", { quantity: 2 });
 
   await page.getByRole("link", { name: /Basket 3/ }).click();
@@ -34,7 +34,7 @@ test("pickup order to proof", async ({ page }) => {
 
 test("lead time days cannot be picked", async ({ page }) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
@@ -60,7 +60,7 @@ test("lead time days cannot be picked", async ({ page }) => {
 
 test("a delivery order shows the delivery note and no fee", async ({ page }) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
@@ -78,11 +78,13 @@ test("a delivery order shows the delivery note and no fee", async ({ page }) => 
 });
 
 test("item limit across flavours", async ({ page }) => {
-  await addToCart(page, "Cookie Jar", { flavour: "Coconut Butterscotch", quantity: 2 });
+  await addToCart(page, "Cookie Jar", { flavour: "Coconut Butterscotch", quantity: 6 });
+  await addToCart(page, "Cookie Jar", { flavour: "Red Velvet", quantity: 4 });
 
-  // The basket is full for this item: the card says so and offers no Add button.
+  // The limit (10) counts across flavour lines: the basket is full for this item, so the card says
+  // so and offers no Add button.
   const jar = menuCard(page, "Cookie Jar");
-  await expect(jar.getByText("Most per order (2) in basket")).toBeVisible();
+  await expect(jar.getByText("Most per order (10) in basket")).toBeVisible();
   await expect(jar.getByRole("button", { name: "Add Cookie Jar to basket" })).toHaveCount(0);
 });
 
@@ -96,7 +98,7 @@ test.describe("no horizontal scroll at 375px", () => {
 
   test("menu, checkout and order page fit the screen", async ({ page }) => {
     await page.goto("/");
-    await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+    await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
     await expectFitsWidth(page, "menu");
 
     await page.getByRole("link", { name: /Basket 1/ }).click();

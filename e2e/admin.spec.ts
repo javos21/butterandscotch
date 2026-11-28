@@ -85,7 +85,7 @@ test("reject a proof", async ({ page }, testInfo) => {
 
 test("blocked date in settings", async ({ page }, testInfo) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
   const iso = await pickAvailableDate(page, dayFor(6, testInfo));

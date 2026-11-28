@@ -97,6 +97,8 @@ export async function pickAvailableDate(page: Page, index: number): Promise<stri
 
 /** Moves the checkout calendar forward until the given ISO date is on screen. */
 export async function showCalendarDate(page: Page, iso: string) {
+  // Wait for the calendar to render its days first: the calendar loads its unavailable dates after mount.
+  await expect(page.locator("[data-date]").first()).toBeVisible();
   for (let attempt = 0; attempt < 4; attempt++) {
     if ((await page.locator(`[data-date="${iso}"]`).count()) > 0) return;
     const before = (await monthLabel(page).textContent()) ?? "";
@@ -118,7 +120,7 @@ async function readPlacedOrder(page: Page): Promise<PlacedOrder> {
 /** Places a one-item pickup order on the bookable day at `dayIndex` and returns its number and token. */
 export async function placePickupOrder(page: Page, dayIndex: number): Promise<PlacedOrder> {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 

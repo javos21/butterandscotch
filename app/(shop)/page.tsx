@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function MenuPage() {
   const [menu, settings] = await Promise.all([getMenu(), getPublicSettings()]);
   const whatsappHref = waLink(settings.whatsapp_number, "Hi! I'd like to ask about a larger order.");
+  const dietaryHref = waLink(settings.whatsapp_number, "Hi! I have a special request or dietary concern.");
   const festive = SEASON.festive;
   const copy = festive ? SEASON : YEAR_ROUND;
   let cardIndex = 0;
@@ -78,6 +79,22 @@ export default async function MenuPage() {
               </section>
             ),
           )}
+          <p className="text-center text-[0.9375rem] text-olive-ink">
+            Any special requests or dietary concerns, make sure you{" "}
+            {dietaryHref ? (
+              <a
+                href={dietaryHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-crimson underline underline-offset-2 hover:text-crimson-deep"
+              >
+                contact us
+              </a>
+            ) : (
+              "contact us"
+            )}{" "}
+            first to ensure we can fulfil it.
+          </p>
         </div>
       ) : null}
 

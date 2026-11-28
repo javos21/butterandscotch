@@ -30,11 +30,12 @@ where id = 1;
 -- Menu sections ---------------------------------------------------------
 
 insert into sections (id, name, sort) values
-  ('00000000-0000-0000-0000-0000000000c1', 'Cupcakes & Cookies', 1),
-  ('00000000-0000-0000-0000-0000000000c2', 'Cakes, Loaves & Shortbread', 2)
+  ('00000000-0000-0000-0000-0000000000c1', 'Cookies & Shortbread', 1),
+  ('00000000-0000-0000-0000-0000000000c2', 'Cakes, Cupcakes & Loaves', 2)
 on conflict (id) do nothing;
 
 -- Menu items (Christmas menu). Prices are in cents. Photos are placeholders.
+-- Limits are per item and count across all of its flavour lines.
 
 insert into items (
   id, section_id, name, description, unit_label, price_cents, image_url,
@@ -42,17 +43,17 @@ insert into items (
 ) values
   (
     '00000000-0000-0000-0000-000000000a01',
-    '00000000-0000-0000-0000-0000000000c1',
+    '00000000-0000-0000-0000-0000000000c2',
     'Lemon Blueberry Cupcakes', null, 'per dozen', 30000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Lemon+Blueberry+Cupcakes',
-    null, false, '{}', 10, true, 1
+    null, false, '{"Christmas Themed Icing","Standard"}', 10, true, 5
   ),
   (
     '00000000-0000-0000-0000-000000000a02',
-    '00000000-0000-0000-0000-0000000000c1',
+    '00000000-0000-0000-0000-0000000000c2',
     'Red Velvet Cupcakes', null, 'per dozen', 30000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Red+Velvet+Cupcakes',
-    null, false, '{}', 10, true, 2
+    null, false, '{"Christmas Themed Icing","Standard"}', 10, true, 4
   ),
   (
     '00000000-0000-0000-0000-000000000a03',
@@ -60,8 +61,8 @@ insert into items (
     'Mini Cookie Bag', null, 'each', 5000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Mini+Cookie+Bag',
     null, false,
-    '{"Coconut Butterscotch","Dark Chocolate & Toffee","Half & Half"}',
-    10, true, 3
+    '{"Dark Chocolate & Toffee","Coconut Butterscotch","Red Velvet","Mix of all 3 flavours"}',
+    10, true, 2
   ),
   (
     '00000000-0000-0000-0000-000000000a04',
@@ -69,22 +70,22 @@ insert into items (
     'Cookie Jar', null, 'each', 9000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Cookie+Jar',
     null, false,
-    '{"Coconut Butterscotch","Dark Chocolate & Toffee","Half & Half"}',
-    2, true, 4
+    '{"Dark Chocolate & Toffee","Coconut Butterscotch","Red Velvet","Mix of all 3 flavours"}',
+    10, true, 1
   ),
   (
     '00000000-0000-0000-0000-000000000a05',
-    '00000000-0000-0000-0000-0000000000c2',
+    '00000000-0000-0000-0000-0000000000c1',
     'Sorrel Cranberry Shortbread', null, 'per dozen', 30000,
-    'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Sorrel+Cranberry+Shortbread',
-    null, true, '{}', 10, true, 1
+    '/menu/Sorrel%20Cranberry%20Shortbread.webp',
+    'Egg Free', false, '{}', 10, true, 3
   ),
   (
     '00000000-0000-0000-0000-000000000a06',
     '00000000-0000-0000-0000-0000000000c2',
     'Hummingbird Cake', 'Double-layer 8-inch', 'each', 60000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Hummingbird+Cake',
-    'Contains nuts', false, '{}', 5, true, 2
+    'Contains nuts', true, '{}', 5, true, 1
   ),
   (
     '00000000-0000-0000-0000-000000000a07',
@@ -98,21 +99,21 @@ insert into items (
     '00000000-0000-0000-0000-0000000000c2',
     'Honey Pistachio Cake', 'Double-layer 8-inch', 'each', 60000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Honey+Pistachio+Cake',
-    'Contains nuts', false, '{}', 5, true, 4
+    'Contains nuts', false, '{}', 5, true, 2
   ),
   (
     '00000000-0000-0000-0000-000000000a09',
     '00000000-0000-0000-0000-0000000000c2',
     'Glazed Lemon Loaf', null, 'each', 25000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Glazed+Lemon+Loaf',
-    null, false, '{}', 5, true, 5
+    null, false, '{}', 10, true, 6
   ),
   (
     '00000000-0000-0000-0000-000000000a10',
     '00000000-0000-0000-0000-0000000000c2',
     'Chocolate Cranberry Loaf', null, 'each', 30000,
     'https://placehold.co/800x800/F5EFE6/8B1E1E.png?text=Chocolate+Cranberry+Loaf',
-    null, true, '{}', 5, true, 6
+    null, false, '{}', 10, true, 7
   )
 on conflict (id) do nothing;
 
