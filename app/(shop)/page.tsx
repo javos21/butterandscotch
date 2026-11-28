@@ -13,6 +13,7 @@ export default async function MenuPage() {
   const [menu, settings] = await Promise.all([getMenu(), getPublicSettings()]);
   const whatsappHref = waLink(settings.whatsapp_number, "Hi! I'd like to ask about a larger order.");
   const dietaryHref = waLink(settings.whatsapp_number, "Hi! I have a special request or dietary concern.");
+  const orderQuestionsHref = waLink(settings.whatsapp_number);
   const festive = SEASON.festive;
   const copy = festive ? SEASON : YEAR_ROUND;
   let cardIndex = 0;
@@ -49,6 +50,57 @@ export default async function MenuPage() {
           <li>Last day for delivery/pickup {formatMonthDay(settings.last_fulfilment_date)}</li>
         </ul>
       </div>
+
+      <section aria-labelledby="how-heading" className="mx-auto mt-14 max-w-5xl space-y-6 px-4">
+        <div className="flex items-center gap-4">
+          <span className="h-[1.5px] flex-1 bg-olive" aria-hidden="true" />
+          <h2 id="how-heading" className="text-center font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-[1.1] text-crimson-deep">
+            Ordering made easy
+          </h2>
+          <span className="h-[1.5px] flex-1 bg-olive" aria-hidden="true" />
+        </div>
+        <ol className="grid gap-4 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-olive-line">
+          {[
+            { icon: ShoppingBasket, label: "Choose your treats", body: null },
+            { icon: CalendarCheck, label: "Pick a date", body: null },
+            {
+              icon: ReceiptText,
+              label: "Pay to confirm",
+              body: "We want to ensure you get your treats for when you need them, so don't forget that your order is only confirmed once proof of payment is received and confirmed. Orders need a 5 day lead time.",
+            },
+          ].map(({ icon: Icon, label, body }, index) => (
+            <li key={label} className="flex items-start gap-3 sm:justify-center sm:px-3">
+              <Icon className="size-9 shrink-0 text-olive" strokeWidth={1.5} aria-hidden="true" />
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-crimson text-lg font-extrabold text-cream">
+                {index + 1}
+              </span>
+              <span className="flex flex-col gap-1">
+                <span className="text-lg font-bold leading-tight text-olive-ink">{label}</span>
+                {body ? <span className="text-[0.9375rem] leading-snug text-olive-ink">{body}</span> : null}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="text-center text-[0.9375rem] text-olive-ink">
+          If you have gifting questions, catering needs, specific requests or dietary requirements,{" "}
+          {orderQuestionsHref ? (
+            <a
+              href={orderQuestionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-crimson underline underline-offset-2 hover:text-crimson-deep"
+            >
+              reach out to us
+            </a>
+          ) : (
+            "reach out to us"
+          )}{" "}
+          before you order.
+        </p>
+        <p className="rounded-2xl bg-crimson px-5 py-3.5 text-center text-base font-bold leading-snug text-cream sm:text-lg">
+          Your order is confirmed after payment proof is checked.
+        </p>
+      </section>
 
       {settings.store_open ? (
         <div id="menu" className="mx-auto max-w-6xl scroll-mt-4 space-y-12 px-4 pt-12">
@@ -91,34 +143,6 @@ export default async function MenuPage() {
           </p>
         </div>
       ) : null}
-
-      <section aria-labelledby="how-heading" className="mx-auto mt-14 max-w-5xl space-y-6 px-4">
-        <div className="flex items-center gap-4">
-          <span className="h-[1.5px] flex-1 bg-olive" aria-hidden="true" />
-          <h2 id="how-heading" className="text-center font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-[1.1] text-crimson-deep">
-            Ordering made easy
-          </h2>
-          <span className="h-[1.5px] flex-1 bg-olive" aria-hidden="true" />
-        </div>
-        <ol className="grid gap-4 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-olive-line">
-          {[
-            { icon: ShoppingBasket, label: "Choose your bakes" },
-            { icon: CalendarCheck, label: "Pick a date" },
-            { icon: ReceiptText, label: "See your total" },
-          ].map(({ icon: Icon, label }, index) => (
-            <li key={label} className="flex items-center gap-3 sm:justify-center sm:px-3">
-              <Icon className="size-9 shrink-0 text-olive" strokeWidth={1.5} aria-hidden="true" />
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-crimson text-lg font-extrabold text-cream">
-                {index + 1}
-              </span>
-              <span className="text-lg font-bold leading-tight text-olive-ink">{label}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="rounded-2xl bg-crimson px-5 py-3.5 text-center text-base font-bold leading-snug text-cream sm:text-lg">
-          Your order is confirmed after payment proof is checked.
-        </p>
-      </section>
 
       {whatsappHref ? (
         <section className="mx-auto mt-8 max-w-5xl px-4">
