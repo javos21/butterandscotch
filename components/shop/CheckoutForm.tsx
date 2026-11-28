@@ -390,10 +390,6 @@ export function CheckoutForm({
       </section>
 
       <section className="space-y-2 rounded-[22px] bg-cream-warm p-4 text-base text-olive-ink sm:p-6">
-        <div className="flex justify-between">
-          <span>Subtotal</span>
-          <span>{checkoutMoney(subtotalCents)}</span>
-        </div>
         <div className="flex justify-between border-t border-olive-line pt-2 text-xl font-extrabold">
           <span>Total</span>
           <span>{checkoutMoney(subtotalCents)}</span>
