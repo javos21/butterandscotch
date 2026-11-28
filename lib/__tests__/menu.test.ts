@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
+import { allergenIcons } from "@/lib/allergen-icons";
 
 /**
  * The menu is seeded from SQL, not from code, so these tests read the two seed files and check
@@ -169,5 +170,27 @@ describe("dev and production seeds describe the same menu", () => {
     const dev = readMenu("supabase/seed.sql").items.map((i) => [i.name, i.section, i.maxQty, i.flavours, i.allergenNote]);
     const prod = readMenu("supabase/production-seed.sql").items.map((i) => [i.name, i.section, i.maxQty, i.flavours, i.allergenNote]);
     expect(prod).toEqual(dev);
+  });
+});
+
+describe("allergen icons", () => {
+  test("a nut note shows the nut icon only", () => {
+    expect(allergenIcons("Contains nuts")).toEqual(["nut"]);
+  });
+
+  test("an egg-free note shows the egg-free icon only", () => {
+    expect(allergenIcons("Egg Free")).toEqual(["egg-free"]);
+  });
+
+  test("a dairy note shows no nut icon", () => {
+    expect(allergenIcons("Contains dairy")).toEqual([]);
+  });
+
+  test("a contains-egg note shows no Egg Free icon", () => {
+    expect(allergenIcons("Contains egg")).toEqual([]);
+  });
+
+  test("no note shows no icon", () => {
+    expect(allergenIcons(null)).toEqual([]);
   });
 });

@@ -147,7 +147,7 @@ A committed two-voice palette: crimson for intent, olive for information, on war
 - **Olive Line** (#CBC7AE): 1 px card borders and decorative dividers only. Too faint (1.6:1) to mark the edge of anything interactive.
 
 ### Tertiary (product swatches only)
-- **Caramel** (#E0A028) and **Cocoa** (#744324): flavour swatch dots (Coconut Butterscotch = caramel, Dark Chocolate & Toffee = cocoa, Half & Half = split circle). Never used for UI chrome.
+- **Caramel** (#E0A028) and **Cocoa** (#744324): flavour swatch dots (Coconut Butterscotch and Red Velvet = caramel, Dark Chocolate & Toffee = cocoa; the Mix of all 3 flavours option has no swatch of its own and uses caramel). Never used for UI chrome.
 
 ### Named Rules
 **The Ribbon Rule.** Crimson fills only things you can press or a status you must notice. Decorative crimson blocks, crimson section backgrounds and crimson body text are prohibited.
@@ -214,7 +214,7 @@ The signature unit of the shop.
 - **Helper:** limits sit under the chips in Olive Label ("Maximum 10 bags · Maximum 2 jars").
 
 ### Choice rows (flavour)
-- **Style:** full-width 56px rows, 10px radius, 1px Olive border, a radio circle at left, Deep Crimson Label text, and a 22px swatch dot at right (Caramel, Cocoa, or split for Half & Half).
+- **Style:** full-width 56px rows, 10px radius, 1px Olive border, a radio circle at left, Deep Crimson Label text, and a 22px swatch dot at right (Caramel, or Cocoa for chocolate and toffee flavours).
 - **Selected:** Warm Cream fill, 1.5px Deep Crimson border, filled crimson check circle.
 - These are real radio inputs; the swatch is decoration and the flavour name is always written.
 

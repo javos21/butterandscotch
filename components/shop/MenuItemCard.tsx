@@ -6,13 +6,16 @@ import { useCart } from "@/components/shop/CartProvider";
 import { FlavourSheet } from "@/components/shop/FlavourSheet";
 import { ItemPhoto } from "@/components/shop/ItemPhoto";
 import { PriceTag } from "@/components/shop/PriceTag";
+import { allergenIcons } from "@/lib/allergen-icons";
 import { roomFor } from "@/lib/cart";
 import type { Item } from "@/lib/types";
 
-/** Icon for a dietary note. The text beside it carries the meaning for screen readers. */
-function AllergenIcon({ note }: { note: string }) {
-  const Icon = /egg/i.test(note) ? Egg : Nut;
-  return <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />;
+/** Dietary icons for a note. The text beside them carries the meaning for screen readers. */
+function AllergenIcons({ note }: { note: string }) {
+  return allergenIcons(note).map((kind) => {
+    const Icon = kind === "nut" ? Nut : Egg;
+    return <Icon key={kind} className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />;
+  });
 }
 
 /**
@@ -52,7 +55,7 @@ export function MenuItemCard({ item, priority }: { item: Item; priority?: boolea
           {item.name}
         </h3>
         <p className="mt-1 flex min-h-[1.5rem] items-center justify-center gap-1.5 text-[0.9375rem] text-olive">
-          {item.allergen_note ? <AllergenIcon note={item.allergen_note} /> : null}
+          {item.allergen_note ? <AllergenIcons note={item.allergen_note} /> : null}
           {item.allergen_note ?? ""}
         </p>
         <div className="mt-2 flex min-h-[4.25rem] justify-center sm:min-h-[4rem]">
