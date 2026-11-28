@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
     status: string;
     created_at: string;
   }>,
+  /** When true, the fake database answers every query with an error. */
+  dbDown: false,
   /** Callbacks passed to next/server after(), run by flush(). */
   afterCallbacks: [] as Array<() => Promise<void>>,
   send: vi.fn<(message: { to: string; subject: string; html: string }) => Promise<{ id: string }>>(
@@ -39,6 +41,10 @@ vi.mock("@/lib/supabase/admin", () => ({
         order: () => builder,
         limit: () => builder,
         then: (resolve: (value: unknown) => void) => {
+          if (mocks.dbDown) {
+            resolve({ data: null, error: { message: "db down" } });
+            return;
+          }
           const rows = mocks.orders.filter((row) => row.email.toLowerCase() === pattern.toLowerCase());
           resolve({ data: rows, error: null });
         },
@@ -69,11 +75,13 @@ async function flush() {
   for (const callback of callbacks) await callback();
 }
 
+let fakeClock = 1_000_000;
+
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://shop.test");
   // Each call moves the clock on two minutes, so the 60-second cooldown never hides a send.
-  let clock = 1_000_000;
-  vi.spyOn(Date, "now").mockImplementation(() => (clock += 120_000));
+  // The clock is module-level and only moves forward: the cooldown map in actions.ts outlives each test.
+  vi.spyOn(Date, "now").mockImplementation(() => (fakeClock += 120_000));
   mocks.orders.length = 0;
   mocks.afterCallbacks.length = 0;
   mocks.send.mockClear();
@@ -128,6 +136,24 @@ describe("findOrderAction", () => {
 
     await expect(flush()).resolves.toBeUndefined();
     expect(response).toEqual(FIND_ORDER_RESPONSE);
+    expect(mocks.send).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed database lookup still returns the same response and does not throw", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.dbDown = true;
+
+    try {
+      const response = await findOrderAction(form("asha@example.test"));
+
+      await expect(flush()).resolves.toBeUndefined();
+      expect(response).toEqual(FIND_ORDER_RESPONSE);
+      expect(errorSpy).toHaveBeenCalledWith("[find-order] findOrderAction failed", expect.any(Error));
+      expect(mocks.send).not.toHaveBeenCalled();
+    } finally {
+      mocks.dbDown = false;
+      errorSpy.mockRestore();
+    }
   });
 
   test("the response does not say whether the email has orders", async () => {
