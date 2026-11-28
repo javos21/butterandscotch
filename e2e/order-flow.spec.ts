@@ -71,7 +71,8 @@ test("a delivery order shows the delivery note and no fee", async ({ page }) => 
 
   await expect(page).toHaveURL(/\/order\//);
   await expect(page.getByText("Once your order is confirmed we will contact you with your total delivery amount.")).toBeVisible();
-  await expect(page.locator("body")).not.toContainText("Transit");
+  await expect(page.getByRole("heading", { name: "Pay by bank transfer" })).toBeVisible();
+  await expect(page.getByText("Delivery fee", { exact: true })).toHaveCount(0);
 });
 
 test("item limit across flavours", async ({ page }) => {

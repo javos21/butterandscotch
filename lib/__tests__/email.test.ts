@@ -203,6 +203,7 @@ describe("order emails", () => {
 
     expect(sent[0].html).toContain("Total: 600.00</strong>");
     expect(sent[0].html).not.toContain("+ delivery");
+    expect(sent[0].html).not.toContain("Once your order is confirmed we will contact you");
   });
 
   test("order_received names the bank account numbers the way the order page does", async () => {

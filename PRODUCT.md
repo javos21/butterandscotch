@@ -39,7 +39,7 @@ A made-to-order home bakery that makes the order itself the easy part: the total
 - Payment window is 48 hours, with a reminder at 24 hours. Unpaid orders hold their slot.
 - Currency is TTD only. Bank transfer only, no card payments. No customer accounts or order history across orders.
 - Stack is already set: Next.js 16 App Router, React 19, Supabase, Tailwind, shadcn/ui and Magic UI, Lucide icons.
-- Undecided: domain name, pickup location and hours, policy and refund text, final delivery-area tiers (the owner is still checking them).
+- Undecided: domain name, pickup location and hours, policy and refund text.
 
 ## Brand Commitments
 

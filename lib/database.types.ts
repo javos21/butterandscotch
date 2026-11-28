@@ -39,14 +39,14 @@ export type Database = {
                   ]
                 },"customers": {
                   Row: {
-                    "broadcast_opt_in": boolean,"broadcast_opt_in_at": string | null,"community_opt_in": boolean,"community_opt_in_at": string | null,"created_at": string | null,"email": string,"first_order_at": string | null,"id": string,"last_order_at": string | null,"name": string | null,"phone": string | null
+                    "broadcast_opt_in": boolean,"broadcast_opt_in_at": string | null,"community_opt_in": boolean,"community_opt_in_at": string | null,"created_at": string,"email": string,"first_order_at": string | null,"id": string,"last_order_at": string | null,"name": string | null,"phone": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "broadcast_opt_in"?: boolean,"broadcast_opt_in_at"?: string | null,"community_opt_in"?: boolean,"community_opt_in_at"?: string | null,"created_at"?: string | null,"email": string,"first_order_at"?: string | null,"id"?: string,"last_order_at"?: string | null,"name"?: string | null,"phone"?: string | null
+                    "broadcast_opt_in"?: boolean,"broadcast_opt_in_at"?: string | null,"community_opt_in"?: boolean,"community_opt_in_at"?: string | null,"created_at"?: string,"email": string,"first_order_at"?: string | null,"id"?: string,"last_order_at"?: string | null,"name"?: string | null,"phone"?: string | null
                   }
                   Update: {
-                    "broadcast_opt_in"?: boolean,"broadcast_opt_in_at"?: string | null,"community_opt_in"?: boolean,"community_opt_in_at"?: string | null,"created_at"?: string | null,"email"?: string,"first_order_at"?: string | null,"id"?: string,"last_order_at"?: string | null,"name"?: string | null,"phone"?: string | null
+                    "broadcast_opt_in"?: boolean,"broadcast_opt_in_at"?: string | null,"community_opt_in"?: boolean,"community_opt_in_at"?: string | null,"created_at"?: string,"email"?: string,"first_order_at"?: string | null,"id"?: string,"last_order_at"?: string | null,"name"?: string | null,"phone"?: string | null
                   }
                   Relationships: [
                     
@@ -186,7 +186,7 @@ isOneToOne: false
                     "access_token": string,"adjustments_cents"?: number,"allergies": string,"created_at"?: string,"customer_id"?: string | null,"customer_name": string,"delivery_address"?: string | null,"email": string,"fulfil_date": string,"fulfilment": string,"id"?: string,"idempotency_key": string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone": string,"policy_accepted_at": string,"policy_version": number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents": number,"total_cents": number,"updated_at"?: string
                   }
                   Update: {
-                    "access_token"?: string,"adjustments_cents"?: number,"allergies"?: string,"created_at"?: string,"customer_id"?: string | null,"customer_name"?: string,"delivery_address"?: string | null,"delivery_area_id"?: string | null,"delivery_area_name"?: string | null,"delivery_fee_cents"?: number | null,"email"?: string,"fulfil_date"?: string,"fulfilment"?: string,"id"?: string,"idempotency_key"?: string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone"?: string,"policy_accepted_at"?: string,"policy_version"?: number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents"?: number,"total_cents"?: number,"updated_at"?: string
+                    "access_token"?: string,"adjustments_cents"?: number,"allergies"?: string,"created_at"?: string,"customer_id"?: string | null,"customer_name"?: string,"delivery_address"?: string | null,"email"?: string,"fulfil_date"?: string,"fulfilment"?: string,"id"?: string,"idempotency_key"?: string,"marketing_opt_in"?: boolean,"notes"?: string | null,"order_number"?: string,"payment_window_started_at"?: string | null,"phone"?: string,"policy_accepted_at"?: string,"policy_version"?: number,"reminder_sent_at"?: string | null,"status"?: string,"subtotal_cents"?: number,"total_cents"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {

@@ -210,8 +210,6 @@ describe("createOrder", () => {
       payment_window_started_at: NOW.toISOString(),
     });
     expect(order).not.toHaveProperty("delivery_fee_cents");
-    expect(order).not.toHaveProperty("delivery_area_id");
-    expect(order).not.toHaveProperty("delivery_area_name");
     const customer = sent.find((msg) => msg.to === "asha@example.test");
     expect(customer?.subject).toBe("Order BS-0001 received — awaiting payment");
     expect(customer?.html).toContain("Sample Bank");
