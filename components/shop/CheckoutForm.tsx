@@ -19,16 +19,11 @@ import { formatFulfilDate } from "@/lib/format-date";
 import { formatMoney } from "@/lib/money";
 import { waLink } from "@/lib/phone";
 import { randomId } from "@/lib/uuid";
-import { checkoutFieldError, type CheckoutField } from "@/lib/validation";
+import { PICKUP_LOCATIONS, checkoutFieldError, type CheckoutField } from "@/lib/validation";
+import { deliveryFeeSentence, ODELIVER_FEE_URL } from "@/lib/checkout-copy";
 
-/**
- * The oDeliver page where a customer can check their exact delivery fee.
- * TODO(owner): replace null with the exact URL from the owner. Until then the sentence shows without a link.
- */
-const ODELIVER_FEE_URL: string | null = null;
+const feeSentence = deliveryFeeSentence(ODELIVER_FEE_URL);
 
-const DELIVERY_FEE_TEXT =
-  "If you would like to check your exact delivery fee before you place your order, click here.";
 const PICKUP_NOTE =
   "You will be contacted for more information about collection once your order is confirmed.";
 const DELIVERY_NOTE =
@@ -47,8 +42,6 @@ export type CheckoutFormProps = {
   lastFulfilmentDate: string;
   /** True once ordering has closed for Christmas. */
   orderingClosed: boolean;
-  /** From settings.pickup_locations. */
-  pickupLocations: string[];
   policyText: string;
   whatsappNumber: string;
 };
@@ -82,7 +75,6 @@ export function CheckoutForm({
   unavailable,
   lastFulfilmentDate,
   orderingClosed,
-  pickupLocations,
   policyText,
   whatsappNumber,
 }: CheckoutFormProps) {
@@ -283,7 +275,7 @@ export function CheckoutForm({
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-base"
             >
               <option value="">Choose a location</option>
-              {pickupLocations.map((location) => (
+              {PICKUP_LOCATIONS.map((location) => (
                 <option key={location} value={location}>
                   {location}
                 </option>
@@ -301,14 +293,16 @@ export function CheckoutForm({
               <Textarea id="address" name="address" required aria-invalid={!!errors.address} value={address} onChange={(e) => setAddress(e.target.value)} />
               <FieldError message={errors.address} />
             </div>
-            <p className="text-sm">
-              {ODELIVER_FEE_URL ? (
-                <a href={ODELIVER_FEE_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
-                  {DELIVERY_FEE_TEXT}
+            <p className="text-sm italic text-muted-foreground">
+              {feeSentence.lead}
+              {feeSentence.link ? (
+                <a href={feeSentence.link.href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                  {feeSentence.link.text}
                 </a>
               ) : (
-                DELIVERY_FEE_TEXT
+                "here"
               )}
+              {feeSentence.trail}
             </p>
             <p className="text-sm italic text-muted-foreground">{DELIVERY_NOTE}</p>
           </div>
