@@ -121,6 +121,15 @@ describe("findOrderAction", () => {
     expect(mocks.send.mock.calls[0][0].to).toBe("asha@example.test");
   });
 
+  test("a failed link email still returns the same response and does not throw", async () => {
+    mocks.send.mockRejectedValueOnce(new Error("provider down"));
+
+    const response = await findOrderAction(form("asha@example.test"));
+
+    await expect(flush()).resolves.toBeUndefined();
+    expect(response).toEqual(FIND_ORDER_RESPONSE);
+  });
+
   test("the response does not say whether the email has orders", async () => {
     const response = await findOrderAction(form("asha@example.test"));
 
