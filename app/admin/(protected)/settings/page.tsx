@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BlockedDatesEditor } from "@/components/admin/BlockedDatesEditor";
 import {
   BankSection,
@@ -21,6 +22,13 @@ export default async function AdminSettingsPage({ searchParams }: PageProps<"/ad
         <h1 className="text-xl font-semibold">Settings</h1>
         <p className="text-sm text-muted-foreground">Each card saves on its own.</p>
       </div>
+      <Link
+        href="/admin/customers"
+        className="flex min-h-11 items-center justify-between rounded-xl border bg-card px-4 py-3 text-sm font-medium hover:bg-muted"
+      >
+        <span>Customers</span>
+        <span className="text-muted-foreground">View and download the broadcast list</span>
+      </Link>
       <SettingsTabs
         initialTab={parseSettingsTab(params.tab)}
         panels={{
