@@ -137,7 +137,12 @@ export function CheckoutForm({
         if ("reason" in result) {
           // Ordering has closed, or the date is past the last fulfilment date: the calendar shows why.
           setDate(null);
-          setErrors({ date: ORDERS_CLOSED_MESSAGE });
+          setErrors({
+            date:
+              result.reason === "closed"
+                ? ORDERS_CLOSED_MESSAGE
+                : `Please choose a date on or before ${new Date(`${lastFulfilmentDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" })}.`,
+          });
           router.refresh();
           return;
         }

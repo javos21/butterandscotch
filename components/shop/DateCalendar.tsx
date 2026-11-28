@@ -72,7 +72,10 @@ export function DateCalendar({
   orderingClosed,
 }: DateCalendarProps) {
   const firstMonth = monthStart(today);
-  const lastMonth = monthStart(addDays(today, BOOKING_HORIZON_DAYS));
+  // Never page past the last bookable date: the horizon or the last fulfilment date, whichever is sooner.
+  const horizonEnd = addDays(today, BOOKING_HORIZON_DAYS);
+  const lastBookable = lastFulfilmentDate < horizonEnd ? lastFulfilmentDate : horizonEnd;
+  const lastMonth = monthStart(lastBookable);
   const [shown, setShown] = useState(() => monthStart(value ?? addDays(today, leadDays)));
   const [showTooSoon, setShowTooSoon] = useState(false);
   const unavailableSet = useMemo(() => new Set(unavailable), [unavailable]);
