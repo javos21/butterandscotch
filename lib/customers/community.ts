@@ -46,12 +46,29 @@ export async function joinCommunity(
 }
 
 /**
- * Production repo. Upserts on email and names only the community columns in the payload, so an
- * existing broadcast_opt_in and its time are left as they are.
+ * Production repo. Only the community columns are ever written, so an existing broadcast_opt_in and
+ * its time are left as they are. The same first-time rule as broadcast applies: the time and the
+ * text are set only when community_opt_in turns on (false to true). A repeat submit changes nothing.
  */
 export function buildCommunityRepo(db: SupabaseClient): CommunityRepo {
   return {
     async setCommunityOptIn(row) {
+      // Existing row that is not yet opted in: switch it on, with its first time and text.
+      const { data, error: updateError } = await db
+        .from("customers")
+        .update({
+          community_opt_in: true,
+          community_opt_in_at: row.optInAt,
+          community_consent_text: row.consentText,
+        })
+        .eq("email", row.email)
+        .eq("community_opt_in", false)
+        .select("email");
+      if (updateError) throw new Error(updateError.message);
+      if (data && data.length > 0) return;
+
+      // No row changed: either a new email, or an email that is already opted in. Insert the new
+      // one; ignoreDuplicates leaves an existing row exactly as it is.
       const { error } = await db.from("customers").upsert(
         {
           email: row.email,
@@ -59,7 +76,7 @@ export function buildCommunityRepo(db: SupabaseClient): CommunityRepo {
           community_opt_in_at: row.optInAt,
           community_consent_text: row.consentText,
         },
-        { onConflict: "email" },
+        { onConflict: "email", ignoreDuplicates: true },
       );
       if (error) throw new Error(error.message);
     },

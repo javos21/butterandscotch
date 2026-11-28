@@ -52,6 +52,22 @@ describe.skipIf(!url || !serviceKey)("footer community opt-in against the databa
     expect(data?.community_opt_in).toBe(true);
   });
 
+  test("a repeat footer submit keeps the first community opt-in time and text", async () => {
+    const email = `${stamp}-repeat@example.test`;
+    const db = service();
+    const repo = buildCommunityRepo(db);
+    await joinCommunity(email, { repo, now: () => new Date("2026-11-28T09:00:00.000Z") });
+    const first = await db.from("customers").select("*").eq("email", email).single();
+
+    const result = await joinCommunity(email, { repo, now: () => new Date("2026-12-01T12:00:00.000Z") });
+    expect(result).toEqual({ ok: true });
+
+    const { data } = await db.from("customers").select("*").eq("email", email).single();
+    expect(data?.community_opt_in_at).toBe(first.data?.community_opt_in_at);
+    expect(new Date(data?.community_opt_in_at as string).toISOString()).toBe("2026-11-28T09:00:00.000Z");
+    expect(data?.community_consent_text).toBe(first.data?.community_consent_text);
+  });
+
   test("an invalid email writes no customer row", async () => {
     const result = await joinCommunity("not-an-email", { repo: buildCommunityRepo(service()), now: () => new Date() });
     expect(result.ok).toBe(false);
