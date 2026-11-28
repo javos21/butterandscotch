@@ -174,6 +174,48 @@ describe("csvField", () => {
     expect(csvField("Anna")).toBe("Anna");
     expect(csvField(null)).toBe("");
   });
+
+  test("a value starting with = gets a leading quote", () => {
+    expect(csvField("=cmd")).toBe("'=cmd");
+  });
+
+  test("a value starting with @ gets a leading quote", () => {
+    expect(csvField("@SUM(A1)")).toBe("'@SUM(A1)");
+  });
+
+  test("a value starting with - gets a leading quote", () => {
+    expect(csvField("-2+3")).toBe("'-2+3");
+  });
+
+  test("a value starting with a tab gets a leading quote", () => {
+    expect(csvField("\tx")).toBe("'\tx");
+  });
+
+  test("a value that needs both the quote and RFC 4180 quoting gets both, quote first", () => {
+    expect(csvField("=1,2")).toBe("\"'=1,2\"");
+  });
+
+  test("a stored phone starting with + is not prefixed", () => {
+    expect(csvField("+18685551234", "phone")).toBe("+18685551234");
+  });
+
+  test("the phone exemption does not cover other columns", () => {
+    expect(csvField("+18685551234")).toBe("'+18685551234");
+  });
+
+  test("a stored phone is exported as +1868... through broadcastCsv", () => {
+    const row = broadcastCsv([
+      customer({
+        id: "c-p",
+        email: "p@x.com",
+        name: "=Pat",
+        phone: "+18685551234",
+        broadcast_opt_in: true,
+        broadcast_opt_in_at: "2026-11-04T10:00:00.000Z",
+      }),
+    ]).split("\r\n")[1];
+    expect(row).toBe("p@x.com,'=Pat,+18685551234,2026-11-04T10:00:00.000Z");
+  });
 });
 
 describe("listCustomers", () => {

@@ -103,10 +103,21 @@ export async function loadBroadcastCustomers(): Promise<CustomerRecord[]> {
   return data ?? [];
 }
 
-/** RFC 4180 field: wrapped in quotes when it holds a comma, a quote or a line break. */
-export function csvField(value: string | null | undefined): string {
+/** A value a spreadsheet would read as a formula once it starts with one of these. */
+const FORMULA_START = /^[=+\-@\t\r]/;
+/** Phone numbers may start with + or - (as +1868... does), so the phone column is exempt when the whole value is phone-shaped. */
+const PHONE_SHAPE = /^\+?[\d\s()-]+$/;
+
+/**
+ * RFC 4180 field. A value that starts with = + - @ tab or CR gets a leading single quote, so a
+ * spreadsheet shows it as text (formula injection). The phone column is exempt for values that
+ * are phone-shaped. The quote is added before RFC 4180 quoting, so "=1,2" becomes "'=1,2".
+ */
+export function csvField(value: string | null | undefined, column: "text" | "phone" = "text"): string {
   if (value === null || value === undefined) return "";
-  const text = String(value);
+  let text = String(value);
+  const exempt = column === "phone" && PHONE_SHAPE.test(text);
+  if (!exempt && FORMULA_START.test(text)) text = `'${text}`;
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
@@ -116,7 +127,12 @@ export function broadcastCsv(customers: CustomerRecord[]): string {
   const rows = customers
     .filter((c) => c.broadcast_opt_in)
     .map((c) =>
-      [c.email, c.name, c.phone, c.broadcast_opt_in_at].map(csvField).join(","),
+      [
+        csvField(c.email),
+        csvField(c.name),
+        csvField(c.phone, "phone"),
+        csvField(c.broadcast_opt_in_at),
+      ].join(","),
     );
   return [header, ...rows].join("\r\n") + "\r\n";
 }
