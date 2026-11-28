@@ -106,6 +106,27 @@ describe("updateSettings", () => {
     });
   });
 
+  test("refuses a close date that is not a real calendar day, under its field name", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings({ order_close_date: "2026-02-30", last_fulfilment_date: "2026-12-23" }, deps);
+    expect(result).toEqual({ error: "Pick a valid date", field: "order_close_date" });
+    expect(calls.settingsWrites).toHaveLength(0);
+  });
+
+  test("saves a close date and last fulfilment date with the pickup info, untouched fields not sent", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings(
+      { pickup_info: "Pickup 10am-4pm.", order_close_date: "2026-12-15", last_fulfilment_date: "2026-12-22" },
+      deps,
+    );
+    expect(result).toEqual({ ok: true });
+    expect(calls.settingsWrites[0]).toEqual({
+      pickup_info: "Pickup 10am-4pm.",
+      order_close_date: "2026-12-15",
+      last_fulfilment_date: "2026-12-22",
+    });
+  });
+
   test("saves a valid shop section", async () => {
     const { deps, calls } = makeRepo();
     const result = await updateSettings({ store_open: false, lead_time_days: 2, daily_order_cap: 30 }, deps);

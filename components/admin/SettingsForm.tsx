@@ -143,12 +143,22 @@ export function BankSection({ settings }: { settings: Settings }) {
 export function PickupSection({ settings }: { settings: Settings }) {
   const id = useId();
   const [pickupInfo, setPickupInfo] = useState(settings.pickup_info);
+  const [closeDate, setCloseDate] = useState(settings.order_close_date);
+  const [lastDate, setLastDate] = useState(settings.last_fulfilment_date);
   const { run, isPending, errors } = useSettingsSave();
   const pickupId = `${id}-pickup`;
+  const closeId = `${id}-close`;
+  const lastId = `${id}-last`;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    run(() => updateSettingsAction({ pickup_info: pickupInfo }));
+    run(() =>
+      updateSettingsAction({
+        pickup_info: pickupInfo,
+        order_close_date: closeDate,
+        last_fulfilment_date: lastDate,
+      }),
+    );
   }
 
   return (
@@ -159,6 +169,30 @@ export function PickupSection({ settings }: { settings: Settings }) {
       isPending={isPending}
       onSubmit={submit}
     >
+      <div className="grid gap-5 md:grid-cols-2">
+        <Field id={closeId} label="Orders close on" error={errors.order_close_date}>
+          <Input
+            id={closeId}
+            type="date"
+            className="h-11"
+            value={closeDate}
+            onChange={(event) => setCloseDate(event.target.value)}
+            aria-invalid={errors.order_close_date ? true : undefined}
+            aria-describedby={errors.order_close_date ? `${closeId}-error` : undefined}
+          />
+        </Field>
+        <Field id={lastId} label="Last day for pickup or delivery" error={errors.last_fulfilment_date}>
+          <Input
+            id={lastId}
+            type="date"
+            className="h-11"
+            value={lastDate}
+            onChange={(event) => setLastDate(event.target.value)}
+            aria-invalid={errors.last_fulfilment_date ? true : undefined}
+            aria-describedby={errors.last_fulfilment_date ? `${lastId}-error` : undefined}
+          />
+        </Field>
+      </div>
       <Field id={pickupId} label="Pickup info" error={errors.pickup_info}>
         <Textarea
           id={pickupId}
