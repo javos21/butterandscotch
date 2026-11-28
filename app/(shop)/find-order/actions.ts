@@ -1,9 +1,11 @@
 "use server";
 
 import { after } from "next/server";
+import { normaliseEmail } from "@/lib/customers/normalise-email";
 import { defaultEmailDeps } from "@/lib/email/deps";
+import { FIND_ORDER_RESPONSE } from "@/lib/orders/find-order-response";
 import {
-  resendLinks,
+  resendOrderLinks,
   type ResendLinksDeps,
   type ResendOrder,
 } from "@/lib/orders/resend-links";
@@ -58,19 +60,19 @@ function buildResendRepo(): ResendLinksDeps["repo"] {
 
 /**
  * Form action for /find-order. Form field: email.
- * Always resolves ok, so the page cannot reveal which emails have orders.
+ * Always returns FIND_ORDER_RESPONSE, so the page cannot reveal which emails have orders.
  *
  * The lookup and send run after the response. If they ran inline, an email with orders would
  * wait on the database and the email provider while an unknown email returned at once, and that
  * timing difference would reveal which addresses have ordered.
  */
-export async function findOrderAction(formData: FormData): Promise<{ ok: true }> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (withinCooldown(email, Date.now())) return { ok: true };
+export async function findOrderAction(formData: FormData): Promise<typeof FIND_ORDER_RESPONSE> {
+  const email = normaliseEmail(String(formData.get("email") ?? ""));
+  if (withinCooldown(email, Date.now())) return FIND_ORDER_RESPONSE;
 
   after(async () => {
     try {
-      await resendLinks(email, {
+      await resendOrderLinks(email, {
         repo: buildResendRepo(),
         email: defaultEmailDeps(),
       });
@@ -79,5 +81,5 @@ export async function findOrderAction(formData: FormData): Promise<{ ok: true }>
     }
   });
 
-  return { ok: true };
+  return FIND_ORDER_RESPONSE;
 }

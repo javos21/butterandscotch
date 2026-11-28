@@ -3,10 +3,8 @@
 import { revalidatePath } from "next/cache";
 import {
   blockDates,
-  saveArea,
   unblockDate,
   updateSettings,
-  type AreaInput,
   type SettingsPatchInput,
   type SettingsResult,
 } from "@/lib/admin/settings";
@@ -27,14 +25,6 @@ export async function updateSettingsAction(input: SettingsPatchInput): Promise<S
     staff: { userId: staff.userId },
     now: () => new Date(),
   });
-  refreshSite();
-  return result;
-}
-
-/** Adds or edits a delivery area. */
-export async function saveAreaAction(input: AreaInput): Promise<SettingsResult> {
-  await requireStaff();
-  const result = await saveArea(input, { repo: settingsRepo() });
   refreshSite();
   return result;
 }

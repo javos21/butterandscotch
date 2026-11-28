@@ -15,8 +15,6 @@ export type ReceiptData = {
   /** ISO "YYYY-MM-DD" fulfilment date. */
   fulfilDate: string;
   fulfilment: "pickup" | "delivery";
-  /** Delivery area name. Null for pickup. */
-  areaName: string | null;
   lines: {
     name: string;
     flavour: string | null;
@@ -24,8 +22,6 @@ export type ReceiptData = {
     unitPriceCents: number;
     lineTotalCents: number;
   }[];
-  /** Null for pickup. */
-  deliveryFeeCents: number | null;
   adjustmentsCents: number;
   totalCents: number;
   whatsappNumber: string;
@@ -37,8 +33,6 @@ export type ReceiptOrder = {
   customerName: string;
   fulfilDate: string;
   fulfilment: "pickup" | "delivery";
-  areaName: string | null;
-  deliveryFeeCents: number | null;
   adjustmentsCents: number;
   totalCents: number;
   items: {
@@ -61,7 +55,6 @@ export function buildReceiptData(
     paidOn,
     fulfilDate: order.fulfilDate,
     fulfilment: order.fulfilment,
-    areaName: order.fulfilment === "delivery" ? order.areaName : null,
     lines: order.items.map((item) => ({
       name: item.name,
       flavour: item.flavour,
@@ -69,7 +62,6 @@ export function buildReceiptData(
       unitPriceCents: item.unitPriceCents,
       lineTotalCents: item.unitPriceCents * item.quantity,
     })),
-    deliveryFeeCents: order.fulfilment === "delivery" ? order.deliveryFeeCents : null,
     adjustmentsCents: order.adjustmentsCents,
     totalCents: order.totalCents,
     whatsappNumber,

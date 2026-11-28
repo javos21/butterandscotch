@@ -10,7 +10,6 @@ export type OrderFilterValue = OrderStatus | "open";
 
 export const ORDER_FILTERS: { value: OrderFilterValue; label: string; empty: string }[] = [
   { value: "open", label: "Open", empty: "No open orders" },
-  { value: "awaiting_quote", label: "Awaiting quote", empty: "No orders waiting for a delivery quote" },
   { value: "awaiting_payment", label: "Awaiting payment", empty: "No orders waiting for payment" },
   { value: "proof_submitted", label: "Payment being checked", empty: "No payments waiting to be checked" },
   { value: "confirmed", label: "Confirmed", empty: "No confirmed orders" },

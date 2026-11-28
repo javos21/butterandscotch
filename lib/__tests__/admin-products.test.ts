@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parsePriceCents } from "@/lib/admin/fee";
+import { parsePriceCents } from "@/lib/admin/price";
 import {
   NOT_FOUND,
   PHOTO_READ_ERROR,

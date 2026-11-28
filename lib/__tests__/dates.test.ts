@@ -5,6 +5,8 @@ import {
   addDays,
   dayState,
   earliestDate,
+  isAfterLastFulfilment,
+  isOrderingClosed,
   trinidadToday,
 } from "@/lib/dates";
 
@@ -57,5 +59,32 @@ describe("dayState", () => {
   test("horizon edge", () => {
     expect(dayState("2027-02-21", ctx)).toBe("available"); // today + 90
     expect(dayState("2027-02-22", ctx)).toBe("beyond"); // today + 91
+  });
+});
+
+describe("isOrderingClosed", () => {
+  test("orders are open on the close date itself, in Trinidad time", () => {
+    expect(isOrderingClosed(new Date("2026-12-16T12:00:00Z"), "2026-12-16")).toBe(false);
+  });
+
+  test("orders are closed the day after the close date", () => {
+    expect(isOrderingClosed(new Date("2026-12-17T12:00:00Z"), "2026-12-16")).toBe(true);
+  });
+
+  test("the Trinidad calendar date decides, not UTC", () => {
+    // 16 Dec, 11:59 pm in Trinidad (UTC-4) is still 16 Dec.
+    expect(isOrderingClosed(new Date("2026-12-17T03:59:00Z"), "2026-12-16")).toBe(false);
+    // 17 Dec, 12:00 am in Trinidad.
+    expect(isOrderingClosed(new Date("2026-12-17T04:00:00Z"), "2026-12-16")).toBe(true);
+  });
+});
+
+describe("isAfterLastFulfilment", () => {
+  test("the last fulfilment date itself is allowed", () => {
+    expect(isAfterLastFulfilment("2026-12-23", "2026-12-23")).toBe(false);
+  });
+
+  test("a date after the last fulfilment date is refused", () => {
+    expect(isAfterLastFulfilment("2026-12-24", "2026-12-23")).toBe(true);
   });
 });

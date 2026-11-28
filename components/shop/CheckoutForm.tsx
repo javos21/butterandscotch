@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import { placeOrderAction } from "@/app/(shop)/checkout/actions";
 import { useCart } from "@/components/shop/CartProvider";
-import { DateCalendar } from "@/components/shop/DateCalendar";
+import { DateCalendar, ORDERS_CLOSED_MESSAGE } from "@/components/shop/DateCalendar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,21 +13,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { BROADCAST_CONSENT_TEXT } from "@/lib/customers/consent-text";
 import { roomFor } from "@/lib/cart";
 import { formatFulfilDate } from "@/lib/format-date";
-import { formatMoney, formatPrice } from "@/lib/money";
+import { formatMoney } from "@/lib/money";
 import { waLink } from "@/lib/phone";
-import type { DeliveryArea } from "@/lib/types";
 import { randomId } from "@/lib/uuid";
-import { checkoutFieldError, type CheckoutField } from "@/lib/validation";
+import { PICKUP_LOCATIONS, checkoutFieldError, type CheckoutField } from "@/lib/validation";
+import { deliveryFeeSentence, ODELIVER_FEE_URL } from "@/lib/checkout-copy";
+
+const feeSentence = deliveryFeeSentence(ODELIVER_FEE_URL);
+
+const PICKUP_NOTE =
+  "You will be contacted for more information about collection once your order is confirmed.";
+const DELIVERY_NOTE =
+  "Once your order is confirmed we will contact you with your total delivery amount. Delivery can be paid via cash or card upon delivery.";
+const ALLERGY_DISCLAIMER =
+  "Our kitchen is not allergen free. If you have severe allergies, please contact us before placing your order.";
+const CONFIRMATION_LINE = "Your order will only be confirmed after proof of payment is received.";
 
 export type CheckoutFormProps = {
-  areas: DeliveryArea[];
   /** Menu items with an allergen note, named in the allergies help text. */
   allergenNotes: { name: string; note: string }[];
   leadDays: number;
   today: string;
   unavailable: string[];
+  /** Last fulfilment date; the calendar offers no date after it. */
+  lastFulfilmentDate: string;
+  /** True once ordering has closed for Christmas. */
+  orderingClosed: boolean;
   policyText: string;
   whatsappNumber: string;
 };
@@ -38,7 +52,11 @@ type Fulfilment = "pickup" | "delivery";
 type Errors = Partial<Record<CheckoutField, string>> & { form?: string };
 
 const GENERIC_ERROR = "We couldn’t place your order. Please try again — your details are still here.";
-const QUOTE_FEE_TEXT = "Delivery fee: we'll email your total";
+
+/** Checkout amounts always carry the $ prefix (TTD). Only checkout uses it; other pages are unchanged. */
+function checkoutMoney(cents: number): string {
+  return `$${formatMoney(cents)}`;
+}
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -49,13 +67,14 @@ function FieldError({ message }: { message?: string }) {
   );
 }
 
-/** The checkout: cart, details, pickup or delivery, date, allergies, policy and the place-order button. */
+/** The checkout: cart, details, pickup or delivery, date, allergies, broadcast opt-in, policy and the place-order button. */
 export function CheckoutForm({
-  areas,
   allergenNotes,
   leadDays,
   today,
   unavailable,
+  lastFulfilmentDate,
+  orderingClosed,
   policyText,
   whatsappNumber,
 }: CheckoutFormProps) {
@@ -70,18 +89,14 @@ export function CheckoutForm({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [fulfilment, setFulfilment] = useState<Fulfilment>("pickup");
-  const [areaId, setAreaId] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
   const [address, setAddress] = useState("");
   const [date, setDate] = useState<string | null>(null);
   const [allergies, setAllergies] = useState("");
-  const [notes, setNotes] = useState("");
-  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [broadcastOptIn, setBroadcastOptIn] = useState(false);
   const [acceptPolicy, setAcceptPolicy] = useState(false);
 
   const whatsappHref = waLink(whatsappNumber);
-  const area = fulfilment === "delivery" ? areas.find((a) => a.id === areaId) : undefined;
-  const quoteOnly = area !== undefined && area.fee_cents === null;
-  const feeCents = area?.fee_cents ?? 0;
 
   if (lines.length === 0 && !placed) {
     return (
@@ -106,12 +121,11 @@ export function CheckoutForm({
       phone,
       fulfilment:
         fulfilment === "pickup"
-          ? { type: "pickup" as const }
-          : { type: "delivery" as const, areaId, address },
+          ? { type: "pickup" as const, location: pickupLocation }
+          : { type: "delivery" as const, address },
       date: date ?? "",
       allergies,
-      notes: notes.trim() || undefined,
-      marketingOptIn,
+      broadcastOptIn,
       acceptPolicy,
       idempotencyKey,
       lines: lines.map((line) => ({
@@ -134,6 +148,18 @@ export function CheckoutForm({
           setPlaced(true);
           clear();
           router.push(`/order/${result.token}`);
+          return;
+        }
+        if ("reason" in result) {
+          // Ordering has closed, or the date is past the last fulfilment date: the calendar shows why.
+          setDate(null);
+          setErrors({
+            date:
+              result.reason === "closed"
+                ? ORDERS_CLOSED_MESSAGE
+                : `Please choose a date on or before ${new Date(`${lastFulfilmentDate}T00:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" })}.`,
+          });
+          router.refresh();
           return;
         }
         if (result.field) {
@@ -165,7 +191,7 @@ export function CheckoutForm({
                 <div className="min-w-0">
                   <p className="font-display text-lg leading-tight text-crimson-deep">{line.name}</p>
                   {line.flavour && <p className="text-[0.9375rem] text-olive">{line.flavour}</p>}
-                  <p className="font-extrabold text-olive-ink">{formatMoney(line.unitPriceCents * line.quantity)}</p>
+                  <p className="font-extrabold text-olive-ink">{checkoutMoney(line.unitPriceCents * line.quantity)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -237,31 +263,48 @@ export function CheckoutForm({
           </div>
         </RadioGroup>
 
+        {fulfilment === "pickup" && (
+          <div className="space-y-2">
+            <Label htmlFor="pickup-location">Pickup location</Label>
+            <select
+              id="pickup-location"
+              name="pickupLocation"
+              aria-invalid={!!errors.pickupLocation}
+              value={pickupLocation}
+              onChange={(e) => setPickupLocation(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-base"
+            >
+              <option value="">Choose a location</option>
+              {PICKUP_LOCATIONS.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
+            <FieldError message={errors.pickupLocation} />
+            <p className="text-sm italic text-muted-foreground">{PICKUP_NOTE}</p>
+          </div>
+        )}
+
         {fulfilment === "delivery" && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="area">Delivery area</Label>
-              <select
-                id="area"
-                name="area"
-                required
-                value={areaId}
-                onChange={(e) => setAreaId(e.target.value)}
-                className="h-12 w-full rounded-[10px] border border-olive bg-card px-3 text-base"
-              >
-                <option value="">Choose an area</option>
-                {areas.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.fee_cents === null ? a.name : `${a.name} — ${formatPrice(a.fee_cents)}`}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="address">Delivery address</Label>
               <Textarea id="address" name="address" required aria-invalid={!!errors.address} value={address} onChange={(e) => setAddress(e.target.value)} />
               <FieldError message={errors.address} />
             </div>
+            <p className="text-sm italic text-muted-foreground">
+              {feeSentence.lead}
+              {feeSentence.link ? (
+                <a href={feeSentence.link.href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                  {feeSentence.link.text}
+                </a>
+              ) : (
+                "here"
+              )}
+              {feeSentence.trail}
+            </p>
+            <p className="text-sm italic text-muted-foreground">{DELIVERY_NOTE}</p>
           </div>
         )}
         {errors.fulfilment && (
@@ -277,6 +320,8 @@ export function CheckoutForm({
           today={today}
           leadDays={leadDays}
           unavailable={unavailable}
+          lastFulfilmentDate={lastFulfilmentDate}
+          orderingClosed={orderingClosed}
           value={date}
           onChange={(picked) => {
             setDate(picked);
@@ -293,11 +338,11 @@ export function CheckoutForm({
       </section>
 
       <section className="space-y-5 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
-        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Allergies and notes</h2>
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Allergies</h2>
         <div className="space-y-2">
           <Label htmlFor="allergies">Allergies or dietary needs</Label>
           <div className="text-sm text-muted-foreground">
-            Our kitchen is not allergen-free. Tell us about any allergies.
+            {ALLERGY_DISCLAIMER}
             {allergenNotes.length > 0 && (
               <>
                 {" "}Items with allergen notes:
@@ -314,17 +359,13 @@ export function CheckoutForm({
           <Textarea id="allergies" name="allergies" required aria-invalid={!!errors.allergies} value={allergies} onChange={(e) => setAllergies(e.target.value)} />
           <FieldError message={errors.allergies} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="notes">Anything else?</Label>
-          <Textarea id="notes" name="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </div>
+      </section>
+
+      <section className="space-y-4 rounded-[22px] border border-olive-line bg-card-cream p-4 sm:p-6">
+        <h2 className="font-display text-2xl leading-tight text-crimson-deep">Anything else</h2>
         <div className="flex items-start gap-2">
-          <Checkbox
-            id="marketing"
-            checked={marketingOptIn}
-            onCheckedChange={(checked) => setMarketingOptIn(checked === true)}
-          />
-          <Label htmlFor="marketing">Can we contact you with offers and specials?</Label>
+          <Checkbox id="broadcast" checked={broadcastOptIn} onCheckedChange={(checked) => setBroadcastOptIn(checked === true)} />
+          <Label htmlFor="broadcast">{BROADCAST_CONSENT_TEXT}</Label>
         </div>
       </section>
 
@@ -349,22 +390,9 @@ export function CheckoutForm({
       </section>
 
       <section className="space-y-2 rounded-[22px] bg-cream-warm p-4 text-base text-olive-ink sm:p-6">
-        <div className="flex justify-between">
-          <span>Subtotal</span>
-          <span>{formatMoney(subtotalCents)}</span>
-        </div>
-        {quoteOnly && (
-          <p className="text-muted-foreground">{QUOTE_FEE_TEXT}</p>
-        )}
-        {area && !quoteOnly && (
-          <div className="flex justify-between">
-            <span>Delivery fee</span>
-            <span>{formatMoney(feeCents)}</span>
-          </div>
-        )}
         <div className="flex justify-between border-t border-olive-line pt-2 text-xl font-extrabold">
           <span>Total</span>
-          <span>{quoteOnly ? `${formatMoney(subtotalCents)} + delivery` : formatMoney(subtotalCents + feeCents)}</span>
+          <span>{checkoutMoney(subtotalCents)}</span>
         </div>
       </section>
 
@@ -374,11 +402,10 @@ export function CheckoutForm({
         </Alert>
       )}
 
-      <p className="rounded-2xl bg-crimson px-4 py-3 text-center text-[0.9375rem] font-bold text-cream">Your order is confirmed after payment proof is checked.</p>
-
       <Button type="submit" className="h-14 w-full rounded-2xl text-lg font-bold" disabled={pending || lines.length === 0}>
-        Place order — pay to confirm
+        Place Order
       </Button>
+      <p className="text-center text-sm text-olive-ink">{CONFIRMATION_LINE}</p>
     </form>
   );
 }

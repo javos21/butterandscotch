@@ -19,7 +19,7 @@ export function adminOrderRepo(staffDb: StaffClient): AdminOrderRepo {
       const { data, error } = await db
         .from("orders")
         .select(
-          "id, order_number, access_token, customer_name, email, status, fulfilment, fulfil_date, subtotal_cents, adjustments_cents, delivery_fee_cents, total_cents",
+          "id, order_number, access_token, customer_name, email, status, fulfilment, fulfil_date, subtotal_cents, adjustments_cents, total_cents",
         )
         .eq("id", orderId)
         .maybeSingle();
@@ -36,7 +36,6 @@ export function adminOrderRepo(staffDb: StaffClient): AdminOrderRepo {
         fulfilDate: data.fulfil_date,
         subtotalCents: data.subtotal_cents,
         adjustmentsCents: data.adjustments_cents,
-        deliveryFeeCents: data.delivery_fee_cents,
         totalCents: data.total_cents,
       };
     },
@@ -44,7 +43,6 @@ export function adminOrderRepo(staffDb: StaffClient): AdminOrderRepo {
     async updateOrder(orderId: string, expectStatus: OrderStatus, set: OrderUpdate) {
       const patch = {
         status: set.status,
-        ...(set.deliveryFeeCents !== undefined ? { delivery_fee_cents: set.deliveryFeeCents } : {}),
         ...(set.totalCents !== undefined ? { total_cents: set.totalCents } : {}),
         ...(set.paymentWindowStartedAt !== undefined
           ? { payment_window_started_at: set.paymentWindowStartedAt, reminder_sent_at: null }

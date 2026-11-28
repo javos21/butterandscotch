@@ -10,7 +10,7 @@ import {
 
 test("pickup order to proof", async ({ page }) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await addToCart(page, "Red Velvet Cupcakes", { quantity: 2 });
 
   await page.getByRole("link", { name: /Basket 3/ }).click();
@@ -18,12 +18,13 @@ test("pickup order to proof", async ({ page }) => {
 
   await fillContact(page);
   await page.getByLabel("Pickup", { exact: true }).check();
+  await page.getByLabel("Pickup location").selectOption("West");
   await page.locator('[data-state="available"]').first().click();
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
 
   await expect(page).toHaveURL(/\/order\//);
-  await expect(page.getByText("Your order is not confirmed until we receive and check your payment")).toBeVisible();
+  await expect(page.getByText("Your order is not confirmed until we have received and approved your payment.")).toBeVisible();
   await expect(page.getByText("650.00").first()).toBeVisible();
 
   await page.getByLabel("Payment receipt").setInputFiles(RECEIPT);
@@ -33,7 +34,7 @@ test("pickup order to proof", async ({ page }) => {
 
 test("lead time days cannot be picked", async ({ page }) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
@@ -48,39 +49,42 @@ test("lead time days cannot be picked", async ({ page }) => {
   await expect(page.getByText("We need 5 days to bake this fresh")).toBeVisible();
 
   await fillContact(page);
+  await page.getByLabel("Pickup location").selectOption("West");
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
 
   await expect(page.getByText("Please choose a date.")).toBeVisible();
   await expect(page).toHaveURL(/\/checkout$/);
   await expect(page.getByText(/^Your date:/)).toHaveCount(0);
 });
 
-test("other area waits for a quote", async ({ page }) => {
+test("a delivery order shows the delivery note and no fee", async ({ page }) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   await fillContact(page);
   await page.getByLabel("Delivery", { exact: true }).check();
-  await page.getByLabel("Delivery area").selectOption({ label: "Other area (we'll contact you)" });
   await page.getByLabel("Delivery address").fill("1 Test Street, Port of Spain");
   await page.locator('[data-state="available"]').first().click();
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
 
   await expect(page).toHaveURL(/\/order\//);
-  await expect(page.getByText("Awaiting delivery quote — we'll email your total")).toBeVisible();
-  await expect(page.locator("body")).not.toContainText("Transit");
+  await expect(page.getByText("Once your order is confirmed we will contact you with your total delivery amount.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pay by bank transfer" })).toBeVisible();
+  await expect(page.getByText("Delivery fee", { exact: true })).toHaveCount(0);
 });
 
 test("item limit across flavours", async ({ page }) => {
-  await addToCart(page, "Cookie Jar", { flavour: "Coconut Butterscotch", quantity: 2 });
+  await addToCart(page, "Cookie Jar", { flavour: "Coconut Butterscotch", quantity: 6 });
+  await addToCart(page, "Cookie Jar", { flavour: "Red Velvet", quantity: 4 });
 
-  // The basket is full for this item: the card says so and offers no Add button.
+  // The limit (10) counts across flavour lines: the basket is full for this item, so the card says
+  // so and offers no Add button.
   const jar = menuCard(page, "Cookie Jar");
-  await expect(jar.getByText("Most per order (2) in basket")).toBeVisible();
+  await expect(jar.getByText("Most per order (10) in basket")).toBeVisible();
   await expect(jar.getByRole("button", { name: "Add Cookie Jar to basket" })).toHaveCount(0);
 });
 
@@ -94,7 +98,7 @@ test.describe("no horizontal scroll at 375px", () => {
 
   test("menu, checkout and order page fit the screen", async ({ page }) => {
     await page.goto("/");
-    await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+    await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
     await expectFitsWidth(page, "menu");
 
     await page.getByRole("link", { name: /Basket 1/ }).click();
@@ -104,12 +108,13 @@ test.describe("no horizontal scroll at 375px", () => {
 
     await fillContact(page);
     await page.getByLabel("Pickup", { exact: true }).check();
+    await page.getByLabel("Pickup location").selectOption("West");
     await page.locator('[data-state="available"]').first().click();
     await acceptPolicyAndAllergies(page);
-    await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+    await page.getByRole("button", { name: "Place Order" }).click();
 
     await expect(page).toHaveURL(/\/order\//);
-    await expect(page.getByText("Your order is not confirmed until we receive and check your payment")).toBeVisible();
+    await expect(page.getByText("Your order is not confirmed until we have received and approved your payment.")).toBeVisible();
     await expectFitsWidth(page, "order page");
   });
 });

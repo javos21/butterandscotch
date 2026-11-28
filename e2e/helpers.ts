@@ -97,6 +97,8 @@ export async function pickAvailableDate(page: Page, index: number): Promise<stri
 
 /** Moves the checkout calendar forward until the given ISO date is on screen. */
 export async function showCalendarDate(page: Page, iso: string) {
+  // Wait for the calendar to render its days first: the calendar loads its unavailable dates after mount.
+  await expect(page.locator("[data-date]").first()).toBeVisible();
   for (let attempt = 0; attempt < 4; attempt++) {
     if ((await page.locator(`[data-date="${iso}"]`).count()) > 0) return;
     const before = (await monthLabel(page).textContent()) ?? "";
@@ -118,32 +120,16 @@ async function readPlacedOrder(page: Page): Promise<PlacedOrder> {
 /** Places a one-item pickup order on the bookable day at `dayIndex` and returns its number and token. */
 export async function placePickupOrder(page: Page, dayIndex: number): Promise<PlacedOrder> {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
 
   await fillContact(page);
   await page.getByLabel("Pickup", { exact: true }).check();
+  await page.getByLabel("Pickup location").selectOption("West");
   await pickAvailableDate(page, dayIndex);
   await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
-  return readPlacedOrder(page);
-}
-
-/** Places a one-item delivery order to "Other area", which waits for an admin quote. */
-export async function placeOtherAreaOrder(page: Page, dayIndex: number): Promise<PlacedOrder> {
-  await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
-  await page.getByRole("link", { name: /Basket 1/ }).click();
-  await expect(page).toHaveURL(/\/checkout$/);
-
-  await fillContact(page);
-  await page.getByLabel("Delivery", { exact: true }).check();
-  await page.getByLabel("Delivery area").selectOption({ label: "Other area (we'll contact you)" });
-  await page.getByLabel("Delivery address").fill("1 Test Street, Port of Spain");
-  await pickAvailableDate(page, dayIndex);
-  await acceptPolicyAndAllergies(page);
-  await page.getByRole("button", { name: "Place order — pay to confirm" }).click();
+  await page.getByRole("button", { name: "Place Order" }).click();
   return readPlacedOrder(page);
 }
 

@@ -1,10 +1,17 @@
 import { randomBytes } from "node:crypto";
-import { BOOKING_HORIZON_DAYS, dayState, trinidadToday } from "@/lib/dates";
+import {
+  BOOKING_HORIZON_DAYS,
+  dayState,
+  isAfterLastFulfilment,
+  isOrderingClosed,
+  trinidadToday,
+} from "@/lib/dates";
 import { siteUrl } from "@/lib/email/layout";
 import { sendTemplate } from "@/lib/email/send";
 import type { EmailDeps } from "@/lib/email/types";
+import { BROADCAST_CONSENT_TEXT } from "@/lib/customers/consent-text";
 import { lineTotal, sumCents } from "@/lib/money";
-import type { DeliveryArea, Item, Settings } from "@/lib/types";
+import type { Item, Settings } from "@/lib/types";
 import { checkoutIssueError, checkoutSchema, type CheckoutField } from "@/lib/validation";
 
 export type OrderRef = { id: string; orderNumber: string; token: string };
@@ -19,19 +26,19 @@ export type NewOrder = {
   email: string;
   phone: string;
   fulfilment: "pickup" | "delivery";
-  delivery_area_id: string | null;
-  /** A copy of the area's name, so later renames do not change this order. */
-  delivery_area_name: string | null;
   delivery_address: string | null;
-  delivery_fee_cents: number | null;
+  pickup_location: string | null;
   fulfil_date: string;
   allergies: string;
   notes: string | null;
-  marketing_opt_in: boolean;
+  /** Stored on the customer record by create_order_with_items, and on the order as the box was ticked. */
+  broadcast_opt_in: boolean;
+  /** The checkbox label shown when the box was ticked. Set on the server, never taken from the browser. */
+  broadcastConsentText: string | null;
   subtotal_cents: number;
   total_cents: number;
-  status: "awaiting_quote" | "awaiting_payment";
-  payment_window_started_at: string | null;
+  status: "awaiting_payment";
+  payment_window_started_at: string;
   policy_version: number;
   policy_accepted_at: string;
 };
@@ -48,7 +55,6 @@ export type NewOrderItem = {
 export type OrderRepo = {
   getSettings(): Promise<Settings>;
   getItems(ids: string[]): Promise<Item[]>;
-  getArea(id: string): Promise<DeliveryArea | null>;
   findByIdempotencyKey(key: string): Promise<OrderRef | null>;
   insertOrder(order: NewOrder, items: NewOrderItem[]): Promise<InsertedOrder>;
 };
@@ -69,8 +75,15 @@ export type CreateOrderDeps = {
   defer?: (task: () => Promise<void>) => void;
 };
 
+/**
+ * Why the shop refused a date outside its Christmas window. "closed": ordering has shut
+ * (after order_close_date). "after_last_date": the fulfil date is past last_fulfilment_date.
+ */
+export type OrderRefusalReason = "closed" | "after_last_date";
+
 export type CreateOrderResult =
   | { token: string }
+  | { ok: false; reason: OrderRefusalReason }
   | { error: string; field?: CheckoutField };
 
 /** True for a real calendar date. Rejects "2026-02-30", which Date would silently roll over. */
@@ -111,6 +124,9 @@ export async function createOrder(
   }
 
   const now = deps.now ? deps.now() : new Date();
+  if (isOrderingClosed(now, settings.order_close_date)) {
+    return { ok: false, reason: "closed" };
+  }
 
   const leadMessage = `Please choose a date at least ${settings.lead_time_days} days from today.`;
   if (!isCalendarDate(checkout.date)) {
@@ -129,6 +145,9 @@ export async function createOrder(
       field: "date",
       error: `Please choose a date within the next ${BOOKING_HORIZON_DAYS} days.`,
     };
+  }
+  if (isAfterLastFulfilment(checkout.date, settings.last_fulfilment_date)) {
+    return { ok: false, reason: "after_last_date" };
   }
 
   const itemList = await deps.repo.getItems([
@@ -183,47 +202,16 @@ export async function createOrder(
   );
 
   const nowIso = now.toISOString();
-  let fulfilment: Pick<
-    NewOrder,
-    | "fulfilment"
-    | "delivery_area_id"
-    | "delivery_area_name"
-    | "delivery_address"
-    | "delivery_fee_cents"
-    | "status"
-    | "payment_window_started_at"
-  >;
+  const fulfilment = {
+    fulfilment: checkout.fulfilment.type,
+    delivery_address: checkout.fulfilment.type === "delivery" ? checkout.fulfilment.address : null,
+    pickup_location: checkout.fulfilment.type === "pickup" ? checkout.fulfilment.location : null,
+    status: "awaiting_payment" as const,
+    payment_window_started_at: nowIso,
+  };
 
-  if (checkout.fulfilment.type === "pickup") {
-    fulfilment = {
-      fulfilment: "pickup",
-      delivery_area_id: null,
-      delivery_area_name: null,
-      delivery_address: null,
-      delivery_fee_cents: null,
-      status: "awaiting_payment",
-      payment_window_started_at: nowIso,
-    };
-  } else {
-    const area = await deps.repo.getArea(checkout.fulfilment.areaId);
-    if (!area || !area.active) {
-      return { field: "fulfilment", error: "Please choose a delivery area." };
-    }
-    const quoting = area.fee_cents === null;
-    fulfilment = {
-      fulfilment: "delivery",
-      delivery_area_id: area.id,
-      delivery_area_name: area.name,
-      delivery_address: checkout.fulfilment.address,
-      delivery_fee_cents: area.fee_cents,
-      status: quoting ? "awaiting_quote" : "awaiting_payment",
-      payment_window_started_at: quoting ? null : nowIso,
-    };
-  }
-
-  const deliveryFeeCents = fulfilment.delivery_fee_cents;
-  const totalCents = subtotalCents + (deliveryFeeCents ?? 0);
-  const awaitingQuote = fulfilment.status === "awaiting_quote";
+  // Delivery is charged separately, on delivery, so the order total is items only.
+  const totalCents = subtotalCents;
   const token = randomBytes(32).toString("base64url");
 
   let inserted: InsertedOrder;
@@ -238,8 +226,9 @@ export async function createOrder(
         ...fulfilment,
         fulfil_date: checkout.date,
         allergies: checkout.allergies,
-        notes: checkout.notes || null,
-        marketing_opt_in: checkout.marketingOptIn,
+        notes: null,
+        broadcast_opt_in: checkout.broadcastOptIn,
+        broadcastConsentText: checkout.broadcastOptIn ? BROADCAST_CONSENT_TEXT : null,
         subtotal_cents: subtotalCents,
         total_cents: totalCents,
         policy_version: settings.policy_version,
@@ -275,11 +264,10 @@ export async function createOrder(
             quantity: line.quantity,
             lineTotalCents: lineTotal(line.unit_price_cents, line.quantity),
           })),
+          fulfilment: checkout.fulfilment.type,
           subtotalCents,
-          deliveryFeeCents,
           totalCents,
-          awaitingQuote,
-          bank: awaitingQuote ? null : settings.bank_details,
+          bank: settings.bank_details,
         },
       }),
     ];
@@ -299,8 +287,8 @@ export async function createOrder(
               email: checkout.email,
               phone: checkout.phone,
               fulfilDate: checkout.date,
+              pickupLocation: checkout.fulfilment.type === "pickup" ? checkout.fulfilment.location : null,
               totalCents,
-              awaitingQuote,
               adminUrl: `${siteUrl()}/admin/orders/${inserted.id}`,
             },
           }),

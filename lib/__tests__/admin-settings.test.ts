@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   blockDates,
-  saveArea,
+  settingsPatchSchema,
   unblockDate,
   updateSettings,
   type SettingsDeps,
@@ -9,6 +9,14 @@ import {
 } from "@/lib/admin/settings";
 
 const NOW = new Date("2026-11-23T14:00:00Z");
+/** A settings row carrying the V2 column defaults from migration 0006. */
+const defaults = {
+  store_open: false,
+  order_close_date: "2026-12-16",
+  last_fulfilment_date: "2026-12-23",
+  pickup_locations: ["West", "Chaguanas"],
+};
+const CLOSE_ORDER_ERROR = "Last fulfilment date must be on or after the order close date";
 const STAFF_ID = "00000000-0000-0000-0000-0000000005a5";
 const PHONE_ERROR = "Please enter a valid WhatsApp number";
 const BANK = {
@@ -22,13 +30,18 @@ const BANK = {
 
 type Calls = {
   settingsWrites: Record<string, unknown>[];
-  areaSaves: Record<string, unknown>[];
   upserts: { date: string; note: string | null }[][];
   deletes: string[];
 };
 
-function makeRepo(options: { policyText?: string; policyVersion?: number; otherActiveAreas?: number } = {}) {
-  const calls: Calls = { settingsWrites: [], areaSaves: [], upserts: [], deletes: [] };
+function makeRepo(
+  options: {
+    policyText?: string;
+    policyVersion?: number;
+    closeDates?: { order_close_date: string; last_fulfilment_date: string };
+  } = {},
+) {
+  const calls: Calls = { settingsWrites: [], upserts: [], deletes: [] };
   const repo: SettingsRepo = {
     async getPolicy() {
       return {
@@ -36,14 +49,14 @@ function makeRepo(options: { policyText?: string; policyVersion?: number; otherA
         policy_version: options.policyVersion ?? 3,
       };
     },
+    async getCloseDates() {
+      return options.closeDates ?? {
+        order_close_date: defaults.order_close_date,
+        last_fulfilment_date: defaults.last_fulfilment_date,
+      };
+    },
     async updateSettings(values) {
       calls.settingsWrites.push(values);
-    },
-    async countActiveAreas() {
-      return options.otherActiveAreas ?? 2;
-    },
-    async saveArea(area) {
-      calls.areaSaves.push(area);
     },
     async upsertBlockedDates(rows) {
       calls.upserts.push(rows);
@@ -56,7 +69,64 @@ function makeRepo(options: { policyText?: string; policyVersion?: number; otherA
   return { deps, calls };
 }
 
+describe("settings schema", () => {
+  test("reads the V2 close dates and pickup locations", () => {
+    const parsed = settingsPatchSchema.parse(defaults);
+    expect(parsed.order_close_date).toBe("2026-12-16");
+    expect(parsed.last_fulfilment_date).toBe("2026-12-23");
+    expect(parsed.pickup_locations).toEqual(["West", "Chaguanas"]);
+  });
+});
+
 describe("updateSettings", () => {
+  test("refuses a last fulfilment date before the order close date", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings({ last_fulfilment_date: "2026-12-10" }, deps);
+    expect(result).toEqual({ error: CLOSE_ORDER_ERROR, field: "last_fulfilment_date" });
+    expect(calls.settingsWrites).toHaveLength(0);
+  });
+
+  test("checks the new close date against the stored last fulfilment date", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings({ order_close_date: "2026-12-30" }, deps);
+    expect(result).toEqual({ error: CLOSE_ORDER_ERROR, field: "last_fulfilment_date" });
+    expect(calls.settingsWrites).toHaveLength(0);
+  });
+
+  test("saves close dates in order", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings(
+      { order_close_date: "2026-12-14", last_fulfilment_date: "2026-12-21" },
+      deps,
+    );
+    expect(result).toEqual({ ok: true });
+    expect(calls.settingsWrites[0]).toEqual({
+      order_close_date: "2026-12-14",
+      last_fulfilment_date: "2026-12-21",
+    });
+  });
+
+  test("refuses a close date that is not a real calendar day, under its field name", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings({ order_close_date: "2026-02-30", last_fulfilment_date: "2026-12-23" }, deps);
+    expect(result).toEqual({ error: "Pick a valid date", field: "order_close_date" });
+    expect(calls.settingsWrites).toHaveLength(0);
+  });
+
+  test("saves a close date and last fulfilment date with the pickup info, untouched fields not sent", async () => {
+    const { deps, calls } = makeRepo();
+    const result = await updateSettings(
+      { pickup_info: "Pickup 10am-4pm.", order_close_date: "2026-12-15", last_fulfilment_date: "2026-12-22" },
+      deps,
+    );
+    expect(result).toEqual({ ok: true });
+    expect(calls.settingsWrites[0]).toEqual({
+      pickup_info: "Pickup 10am-4pm.",
+      order_close_date: "2026-12-15",
+      last_fulfilment_date: "2026-12-22",
+    });
+  });
+
   test("saves a valid shop section", async () => {
     const { deps, calls } = makeRepo();
     const result = await updateSettings({ store_open: false, lead_time_days: 2, daily_order_cap: 30 }, deps);
@@ -127,49 +197,6 @@ describe("updateSettings", () => {
     const { deps } = makeRepo();
     const result = await updateSettings({ notify_email: "not-an-email" }, deps);
     expect(result).toEqual({ error: "Enter a valid notification email", field: "notify_email" });
-  });
-});
-
-describe("saveArea", () => {
-  const area = { id: "area-1", name: "Port of Spain", feeCents: 2500, active: true, sort: 1 };
-
-  test("saves an active area with its fee in cents", async () => {
-    const { deps, calls } = makeRepo();
-    const result = await saveArea(area, deps);
-    expect(result).toEqual({ ok: true });
-    expect(calls.areaSaves[0]).toEqual({
-      id: "area-1",
-      name: "Port of Spain",
-      fee_cents: 2500,
-      active: true,
-      sort: 1,
-    });
-  });
-
-  test("keeps a null fee for areas where we'll quote", async () => {
-    const { deps, calls } = makeRepo();
-    await saveArea({ ...area, feeCents: null }, deps);
-    expect(calls.areaSaves[0]).toMatchObject({ fee_cents: null });
-  });
-
-  test("refuses to switch off the last active area", async () => {
-    const { deps, calls } = makeRepo({ otherActiveAreas: 0 });
-    const result = await saveArea({ ...area, active: false }, deps);
-    expect(result).toEqual({ error: "Keep at least one delivery area switched on", field: "active" });
-    expect(calls.areaSaves).toHaveLength(0);
-  });
-
-  test("allows switching off an area when another stays active", async () => {
-    const { deps, calls } = makeRepo({ otherActiveAreas: 1 });
-    const result = await saveArea({ ...area, active: false }, deps);
-    expect(result).toEqual({ ok: true });
-    expect(calls.areaSaves[0]).toMatchObject({ active: false });
-  });
-
-  test("refuses a fee above 1,000", async () => {
-    const { deps } = makeRepo();
-    const result = await saveArea({ ...area, feeCents: 100_001 }, deps);
-    expect(result).toEqual({ error: "Enter a fee between 0 and 1,000", field: "feeCents" });
   });
 });
 

@@ -1,11 +1,9 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { formatFulfilDate } from "../lib/format-date";
-import { formatMoney } from "../lib/money";
 import {
   addToCart,
   openAdminOrder,
   pickAvailableDate,
-  placeOtherAreaOrder,
   placePickupOrder,
   serviceClient,
   showCalendarDate,
@@ -18,10 +16,12 @@ test.describe.configure({ timeout: 120_000 });
 
 /**
  * Each test books its own bookable day (0 is left to the order-flow specs), and the mobile project
- * uses days 20 later, so the desktop and mobile runs never book or block the same date.
+ * uses days 10 later, so the desktop and mobile runs never book or block the same date. The V2
+ * calendar only offers days up to 23 December (about 21 bookable days from late November), so the
+ * offset must stay inside that window.
  */
 function dayFor(base: number, testInfo: TestInfo): number {
-  return base + (testInfo.project.name === "mobile" ? 20 : 0);
+  return base + (testInfo.project.name === "mobile" ? 10 : 0);
 }
 
 /** Opens the payment queue on the admin side and the order's proof card. Returns the admin order id. */
@@ -85,32 +85,9 @@ test("reject a proof", async ({ page }, testInfo) => {
   await expect(page.getByLabel("Payment receipt")).toBeVisible();
 });
 
-test("set a delivery fee", async ({ page }, testInfo) => {
-  const order = await placeOtherAreaOrder(page, dayFor(3, testInfo));
-  await expect(page.getByText("Awaiting delivery quote — we'll email your total")).toBeVisible();
-
-  const admin = await page.context().newPage();
-  await signInAsStaff(admin);
-  await openAdminOrder(admin, order.orderNumber);
-
-  await admin.getByLabel("Delivery fee", { exact: true }).fill("45");
-  await admin.getByRole("button", { name: "Save fee and email total" }).click();
-  await expect(admin.getByText("Saved", { exact: true })).toBeVisible();
-
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Pay by bank transfer" })).toBeVisible();
-  await expect(page.getByText("Delivery fee").locator("xpath=following-sibling::dd")).toHaveText(formatMoney(4500));
-
-  const subtotalText = await page.getByText("Subtotal", { exact: true }).locator("xpath=following-sibling::dd").textContent();
-  const subtotalCents = Math.round(Number((subtotalText ?? "").replace(/[^\d.]/g, "")) * 100);
-  await expect(page.getByText("Total", { exact: true }).locator("xpath=following-sibling::dd")).toHaveText(
-    formatMoney(subtotalCents + 4500),
-  );
-});
-
 test("blocked date in settings", async ({ page }, testInfo) => {
   await page.goto("/");
-  await addToCart(page, "Mini Cookie Bag", { flavour: "Half & Half" });
+  await addToCart(page, "Mini Cookie Bag", { flavour: "Mix of all 3 flavours" });
   await page.getByRole("link", { name: /Basket 1/ }).click();
   await expect(page).toHaveURL(/\/checkout$/);
   const iso = await pickAvailableDate(page, dayFor(6, testInfo));

@@ -60,8 +60,6 @@ function freshState(overrides: Partial<State> = {}): State {
       status: "proof_submitted",
       fulfilment: "pickup",
       fulfilDate: "2026-11-28",
-      areaName: null,
-      deliveryFeeCents: null,
       adjustmentsCents: 0,
       totalCents: 7800,
       items: [

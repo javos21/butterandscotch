@@ -7,7 +7,6 @@ import StaffProofReceived from "@/lib/email/templates/StaffProofReceived";
 import OrderLinks from "@/lib/email/templates/OrderLinks";
 import OrderConfirmed from "@/lib/email/templates/OrderConfirmed";
 import ProofRejected from "@/lib/email/templates/ProofRejected";
-import TotalReady from "@/lib/email/templates/TotalReady";
 import DateChanged from "@/lib/email/templates/DateChanged";
 import OrderCancelled from "@/lib/email/templates/OrderCancelled";
 import OrderReady from "@/lib/email/templates/OrderReady";
@@ -38,24 +37,19 @@ const TEMPLATES: { [K in TemplateName]: ComponentType<TemplateData[K]> } = {
   order_links: OrderLinks,
   order_confirmed: OrderConfirmed,
   proof_rejected: ProofRejected,
-  total_ready: TotalReady,
   date_changed: DateChanged,
   order_cancelled: OrderCancelled,
   order_ready: OrderReady,
 };
 
 const SUBJECTS: { [K in TemplateName]: (data: TemplateData[K]) => string } = {
-  order_received: (data) =>
-    `Order ${data.orderNumber} received — ${
-      data.awaitingQuote ? "awaiting delivery quote" : "awaiting payment"
-    }`,
+  order_received: (data) => `Order ${data.orderNumber} received — awaiting payment`,
   staff_new_order: (data) => `New order ${data.orderNumber} from ${data.customerName}`,
   proof_received: (data) => `We received your payment proof for ${data.orderNumber}`,
   staff_proof_received: (data) => `Payment proof to check for ${data.orderNumber}`,
   order_links: () => "Your Butter & Scotch orders",
   order_confirmed: (data) => `Order ${data.orderNumber} confirmed — receipt attached`,
   proof_rejected: (data) => `Action needed: payment proof for ${data.orderNumber}`,
-  total_ready: (data) => `Your total for ${data.orderNumber} is ready — pay to confirm`,
   date_changed: (data) => `New date for order ${data.orderNumber}`,
   order_cancelled: (data) => `Order ${data.orderNumber} cancelled`,
   order_ready: (data) =>

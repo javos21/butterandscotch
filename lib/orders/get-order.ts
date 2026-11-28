@@ -32,14 +32,11 @@ export type OrderView = {
   customerName: string;
   createdAt: string;
   fulfilment: "pickup" | "delivery";
-  areaName: string | null;
   address: string | null;
   /** ISO "YYYY-MM-DD". */
   fulfilDate: string;
   items: OrderViewItem[];
   subtotalCents: number;
-  /** Null for pickup, and for a delivery area that is still waiting for a quote. */
-  deliveryFeeCents: number | null;
   adjustmentsCents: number;
   totalCents: number;
   /** Bank details to pay into. Set only while the customer can still pay. */
@@ -78,7 +75,6 @@ export async function getOrderView(token: string): Promise<OrderView | null> {
     customerName: data.customer_name,
     createdAt: data.created_at,
     fulfilment,
-    areaName: data.delivery_area_name,
     address: data.delivery_address,
     fulfilDate: data.fulfil_date,
     // Sorted here, not in the query: an embed without an order is not guaranteed to stay stable.
@@ -97,7 +93,6 @@ export async function getOrderView(token: string): Promise<OrderView | null> {
       lineTotalCents: item.unit_price_cents * item.quantity,
     })),
     subtotalCents: data.subtotal_cents,
-    deliveryFeeCents: data.delivery_fee_cents,
     adjustmentsCents: data.adjustments_cents,
     totalCents: data.total_cents,
     bank,

@@ -32,14 +32,14 @@ A made-to-order home bakery that makes the order itself the easy part: the total
 ## Capabilities and Constraints
 
 - Storefront: menu by section, item photos, allergen tags, a "Seasonal" badge, flavour choice for cookies, a quantity limit per item.
-- Cart with no login. Checkout collects name, email (required), WhatsApp number, pickup or delivery, area and address, a date from a three-state calendar, allergies (required, "None" allowed), optional notes, optional marketing opt-in, and a required policy checkbox.
-- Delivery areas have fees known at checkout. An "Other area (we'll contact you)" option places the order in awaiting_quote, with no bank details shown until the owner sets a fee.
+- Cart with no login. Checkout collects name, email (required), WhatsApp number, pickup or delivery (with an address for delivery), a date from a three-state calendar, allergies (required, "None" allowed), optional notes, optional marketing opt-in, and a required policy checkbox.
+- Delivery is not priced at checkout. The order total is items only. Delivery is paid for on delivery, by cash or card, and the owner confirms that amount after the order is placed.
 - Order page at a private link (no login): status, "not confirmed" banner while unpaid, bank details with copy buttons, proof upload, a pickup address only after confirmation, a WhatsApp link.
 - Find my order: the customer enters their email to receive order links.
 - Payment window is 48 hours, with a reminder at 24 hours. Unpaid orders hold their slot.
 - Currency is TTD only. Bank transfer only, no card payments. No customer accounts or order history across orders.
 - Stack is already set: Next.js 16 App Router, React 19, Supabase, Tailwind, shadcn/ui and Magic UI, Lucide icons.
-- Undecided: domain name, pickup location and hours, policy and refund text, final delivery-area tiers (the owner is still checking them).
+- Undecided: domain name, pickup location and hours, policy and refund text.
 
 ## Brand Commitments
 

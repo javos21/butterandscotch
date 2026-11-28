@@ -5,11 +5,9 @@ import { findOrderAction } from "@/app/(shop)/find-order/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FIND_ORDER_RESPONSE } from "@/lib/orders/find-order-response";
 
-const NEUTRAL_MESSAGE =
-  "If we have orders for that email, we've sent the links. Check your inbox (and spam).";
-
-/** Asks for an email and emails the order links. Shows the same neutral message whatever the outcome. */
+/** Asks for an email and emails the order links. Shows the same message whatever the outcome. */
 export function FindOrderForm() {
   const [sent, setSent] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -21,7 +19,7 @@ export function FindOrderForm() {
       try {
         await findOrderAction(data);
       } catch {
-        // Transport errors still show the neutral message instead of reaching the error boundary.
+        // Transport errors still show the same message instead of reaching the error boundary.
       } finally {
         setSent(true);
       }
@@ -31,7 +29,7 @@ export function FindOrderForm() {
   if (sent) {
     return (
       <p role="status" className="text-sm">
-        {NEUTRAL_MESSAGE}
+        {FIND_ORDER_RESPONSE.message}
       </p>
     );
   }

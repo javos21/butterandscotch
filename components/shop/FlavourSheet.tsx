@@ -10,10 +10,9 @@ import { formatMoney } from "@/lib/money";
 import type { Item } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-/** Swatch colour for a flavour name (caramel, cocoa, or split for Half & Half). */
+/** Swatch colour for a flavour name (cocoa for chocolate or toffee, caramel otherwise). */
 function swatchStyle(flavour: string): React.CSSProperties {
   const name = flavour.toLowerCase();
-  if (name.includes("half")) return { background: "linear-gradient(90deg, var(--caramel) 50%, var(--cocoa) 50%)" };
   if (name.includes("chocolate") || name.includes("toffee")) return { background: "var(--cocoa)" };
   return { background: "var(--caramel)" };
 }
@@ -65,13 +64,13 @@ export function FlavourSheet({
         <SheetHeader className="p-0 text-left">
           <SheetTitle className="font-display text-3xl font-normal text-oxblood">{item.name}</SheetTitle>
           <SheetDescription className="text-base text-olive-ink">
-            {hasFlavours ? "Choose a flavour and how many, then add it to your basket." : "Choose how many, then add it to your basket."}
+            {hasFlavours ? "Choose one and how many, then add it to your basket." : "Choose how many, then add it to your basket."}
           </SheetDescription>
         </SheetHeader>
 
         {hasFlavours ? (
         <fieldset className="mt-6 space-y-3">
-          <legend className="sr-only">Flavour</legend>
+          <legend className="sr-only">Choose one</legend>
           {item.flavours.map((option) => {
             const selected = option === flavour;
             return (

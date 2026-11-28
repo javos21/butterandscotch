@@ -7,7 +7,7 @@ import {
   type OrderRepo,
 } from "@/lib/orders/create-order";
 import { createAdminSupabase } from "@/lib/supabase/admin";
-import type { DeliveryArea, Item, Settings } from "@/lib/types";
+import type { Item, Settings } from "@/lib/types";
 
 const UNIQUE_VIOLATION = "23505";
 const DATE_UNAVAILABLE = "date_unavailable";
@@ -41,16 +41,6 @@ export function buildOrderRepo(): OrderRepo {
       const { data, error } = await db.from("items").select("*").in("id", ids);
       if (error) throw new Error(error.message);
       return (data ?? []) as Item[];
-    },
-
-    async getArea(id: string) {
-      const { data, error } = await db
-        .from("delivery_areas")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      return (data ?? null) as DeliveryArea | null;
     },
 
     findByIdempotencyKey: findOrderByKey,

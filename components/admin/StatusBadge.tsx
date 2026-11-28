@@ -2,7 +2,6 @@ import { STATUS_LABEL, type OrderStatus } from "@/lib/order-status";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<OrderStatus, string> = {
-  awaiting_quote: "bg-status-warning-bg text-status-warning",
   awaiting_payment: "bg-status-info-bg text-status-info",
   proof_submitted: "bg-status-progress-bg text-status-progress",
   confirmed: "bg-status-success-bg text-status-success",

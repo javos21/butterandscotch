@@ -8,14 +8,12 @@ import {
   markCompleted,
   markReady,
   requestProofAgain,
-  setDeliveryFee,
   type CancelOrderInput,
   type ChangeDateInput,
   type MarkCompletedInput,
   type MarkReadyInput,
   type OrderActionDeps,
   type OrderActionResult,
-  type SetDeliveryFeeInput,
 } from "@/lib/admin/order-actions";
 import { adminOrderRepo } from "@/lib/admin/orders-repo";
 import { requireStaff } from "@/lib/auth/require-staff";
@@ -27,7 +25,6 @@ const SAFE_ERROR = "Something went wrong — refresh and try again";
 
 const orderIdSchema = z.string().min(1);
 
-const feeSchema = z.object({ orderId: orderIdSchema, feeCents: z.number() });
 const dateSchema = z.object({
   orderId: orderIdSchema,
   newDate: z.string(),
@@ -51,18 +48,6 @@ async function actionDeps(staffUserId: string): Promise<OrderActionDeps> {
     getBank: getBankDetails,
     getPickupInfo: async () => (await getPublicSettings()).pickup_info,
   };
-}
-
-/** Sets the delivery fee on an awaiting-quote order and emails the customer the total and bank details. */
-export async function setDeliveryFeeAction(input: SetDeliveryFeeInput): Promise<OrderActionResult> {
-  const staff = await requireStaff();
-
-  const parsed = feeSchema.safeParse(input);
-  if (!parsed.success) return { error: SAFE_ERROR };
-
-  const result = await setDeliveryFee(parsed.data, await actionDeps(staff.userId));
-  revalidatePath("/admin", "layout");
-  return result;
 }
 
 /** Moves the fulfil date through the staff RPC and emails the customer the change. */

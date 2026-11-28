@@ -3,6 +3,7 @@ import {
   ORDER_STATUSES,
   OrderStateError,
   STATUS_LABEL,
+  parseStatus,
   afterProofSubmitted,
   countsTowardCap,
   nextStatus,
@@ -20,7 +21,6 @@ describe("afterProofSubmitted", () => {
   });
   test("other statuses cannot take a proof", () => {
     for (const s of [
-      "awaiting_quote",
       "confirmed",
       "ready",
       "completed",
@@ -36,7 +36,7 @@ describe("countsTowardCap", () => {
     expect(countsTowardCap("cancelled")).toBe(false);
   });
   test("open orders count", () => {
-    expect(countsTowardCap("awaiting_quote")).toBe(true);
+    expect(countsTowardCap("awaiting_payment")).toBe(true);
   });
 });
 
@@ -44,8 +44,22 @@ describe("paymentOpen", () => {
   test("payment is open while awaiting payment", () => {
     expect(paymentOpen("awaiting_payment")).toBe(true);
   });
-  test("payment is not open while awaiting a quote", () => {
-    expect(paymentOpen("awaiting_quote")).toBe(false);
+  test("payment is not open once proof has been sent", () => {
+    expect(paymentOpen("proof_submitted")).toBe(false);
+  });
+});
+
+describe("parseStatus", () => {
+  test("accepts every current status", () => {
+    for (const status of ORDER_STATUSES) {
+      expect(parseStatus(status)).toBe(status);
+    }
+  });
+  test("refuses the removed awaiting_quote status", () => {
+    expect(() => parseStatus("awaiting_quote")).toThrow(OrderStateError);
+  });
+  test("refuses an unknown status", () => {
+    expect(() => parseStatus("nonsense")).toThrow(OrderStateError);
   });
 });
 
@@ -65,14 +79,12 @@ describe("nextStatus", () => {
   const allowed: Array<[OrderStatus, StaffAction, OrderStatus]> = [
     ["proof_submitted", "confirm_proof", "confirmed"],
     ["proof_submitted", "reject_proof", "awaiting_payment"],
-    ["awaiting_quote", "set_fee", "awaiting_payment"],
     ["confirmed", "mark_ready", "ready"],
     ["ready", "mark_completed", "completed"],
     ["confirmed", "mark_completed", "completed"],
   ];
 
   const cancellable: OrderStatus[] = [
-    "awaiting_quote",
     "awaiting_payment",
     "proof_submitted",
     "confirmed",
@@ -82,7 +94,6 @@ describe("nextStatus", () => {
   const actions: StaffAction[] = [
     "confirm_proof",
     "reject_proof",
-    "set_fee",
     "mark_ready",
     "mark_completed",
     "cancel",
@@ -108,8 +119,8 @@ describe("nextStatus", () => {
     expect(() => nextStatus("completed", "cancel")).toThrow(
       "Can't cancel an order that is completed",
     );
-    expect(() => nextStatus("awaiting_quote", "mark_ready")).toThrow(
-      "Can't mark ready an order that is awaiting delivery quote",
+    expect(() => nextStatus("completed", "mark_ready")).toThrow(
+      "Can't mark ready an order that is completed",
     );
   });
 });

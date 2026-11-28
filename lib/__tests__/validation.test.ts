@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { checkoutSchema } from "@/lib/validation";
+import { checkoutFieldError, checkoutSchema } from "@/lib/validation";
 
 const ITEM_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -7,7 +7,7 @@ const ok = {
   name: "Ana",
   email: "Ana@Example.com",
   phone: "868 123 4567",
-  fulfilment: { type: "pickup" },
+  fulfilment: { type: "pickup", location: "West" },
   date: "2026-12-20",
   allergies: "None",
   acceptPolicy: true,
@@ -20,7 +20,7 @@ describe("checkoutSchema", () => {
     const parsed = checkoutSchema.parse(ok);
     expect(parsed.email).toBe("ana@example.com");
     expect(parsed.phone).toBe("+1-868-123-4567");
-    expect(parsed.marketingOptIn).toBe(false);
+    expect(parsed.broadcastOptIn).toBe(false);
   });
 
   test("rejects blank allergies", () => {
@@ -33,15 +33,43 @@ describe("checkoutSchema", () => {
 
   test("rejects delivery without an address", () => {
     expect(
-      checkoutSchema.safeParse({ ...ok, fulfilment: { type: "delivery", areaId: ITEM_ID, address: "" } }).success,
+      checkoutSchema.safeParse({ ...ok, fulfilment: { type: "delivery", address: "" } }).success,
     ).toBe(false);
   });
 
-  test("accepts delivery with an area and address", () => {
+  test("pickup without a location is refused with the location message", () => {
+    expect(checkoutFieldError({ ...ok, fulfilment: { type: "pickup", location: "" } })).toEqual({
+      field: "pickupLocation",
+      error: "Choose West or Chaguanas",
+    });
+    expect(checkoutFieldError({ ...ok, fulfilment: { type: "pickup" } })).toEqual({
+      field: "pickupLocation",
+      error: "Choose West or Chaguanas",
+    });
+  });
+
+  test("pickup accepts West and Chaguanas and no other location", () => {
+    expect(checkoutSchema.safeParse({ ...ok, fulfilment: { type: "pickup", location: "Chaguanas" } }).success).toBe(true);
+    expect(checkoutSchema.safeParse({ ...ok, fulfilment: { type: "pickup", location: "Arima" } }).success).toBe(false);
+  });
+
+  test("delivery without an address is refused against the address field", () => {
+    expect(checkoutFieldError({ ...ok, fulfilment: { type: "delivery", address: "" } })).toEqual({
+      field: "address",
+      error: "Please enter your delivery address.",
+    });
+  });
+
+  test("notes in the input are ignored and not returned", () => {
+    const parsed = checkoutSchema.parse({ ...ok, notes: "Please ring twice" });
+    expect(parsed).not.toHaveProperty("notes");
+  });
+
+  test("accepts delivery with an address and no area", () => {
     expect(
       checkoutSchema.safeParse({
         ...ok,
-        fulfilment: { type: "delivery", areaId: ITEM_ID, address: "12 Main Road, St Ann's" },
+        fulfilment: { type: "delivery", address: "12 Main Road, St Ann's" },
       }).success,
     ).toBe(true);
   });

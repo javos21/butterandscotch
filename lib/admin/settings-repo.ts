@@ -2,7 +2,7 @@ import "server-only";
 import type { SettingsRepo, SettingsUpdate } from "@/lib/admin/settings";
 import type { Json } from "@/lib/database.types";
 import { createAdminSupabase } from "@/lib/supabase/admin";
-import type { DeliveryArea, Settings } from "@/lib/types";
+import type { Settings } from "@/lib/types";
 
 /**
  * Settings persistence for the admin Settings page. Uses the service role, so callers must run
@@ -22,6 +22,16 @@ export function settingsRepo(): SettingsRepo {
       return data;
     },
 
+    async getCloseDates() {
+      const { data, error } = await db
+        .from("settings")
+        .select("order_close_date, last_fulfilment_date")
+        .eq("id", 1)
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+
     async updateSettings(values: SettingsUpdate) {
       const { bank_details, ...rest } = values;
       const { error } = await db
@@ -32,22 +42,6 @@ export function settingsRepo(): SettingsRepo {
           updated_at: new Date().toISOString(),
         })
         .eq("id", 1);
-      if (error) throw new Error(error.message);
-    },
-
-    async countActiveAreas(excludeId?: string) {
-      let query = db.from("delivery_areas").select("id", { count: "exact", head: true }).eq("active", true);
-      if (excludeId) query = query.neq("id", excludeId);
-      const { count, error } = await query;
-      if (error) throw new Error(error.message);
-      return count ?? 0;
-    },
-
-    async saveArea({ id, name, fee_cents, active, sort }) {
-      const row = { name, fee_cents, active, sort };
-      const { error } = id
-        ? await db.from("delivery_areas").update(row).eq("id", id)
-        : await db.from("delivery_areas").insert(row);
       if (error) throw new Error(error.message);
     },
 
@@ -63,25 +57,21 @@ export function settingsRepo(): SettingsRepo {
   };
 }
 
-/** Everything the Settings page shows: the settings row, delivery areas and blocked dates. */
+/** Everything the Settings page shows: the settings row and blocked dates. */
 export async function loadSettingsAdmin(): Promise<{
   settings: Settings;
-  areas: DeliveryArea[];
   blocked: { date: string; note: string | null }[];
 }> {
   const db = createAdminSupabase();
-  const [settings, areas, blocked] = await Promise.all([
+  const [settings, blocked] = await Promise.all([
     db.from("settings").select("*").eq("id", 1).single(),
-    db.from("delivery_areas").select("*").order("sort").order("name"),
     db.from("blocked_dates").select("*").order("date"),
   ]);
   if (settings.error) throw new Error(settings.error.message);
-  if (areas.error) throw new Error(areas.error.message);
   if (blocked.error) throw new Error(blocked.error.message);
 
   return {
     settings: settings.data as unknown as Settings,
-    areas: areas.data,
     blocked: blocked.data,
   };
 }
