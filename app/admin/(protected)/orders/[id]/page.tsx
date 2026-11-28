@@ -16,14 +16,12 @@ import type { OrderStatus } from "@/lib/order-status";
 import { isUuid } from "@/lib/uuid";
 
 const EVENT_LABEL: Record<string, string> = {
-  fee_set: "Delivery fee set",
   date_changed: "Date changed",
   proof_submitted: "Payment proof uploaded",
   payment_confirmed: "Payment confirmed",
   payment_rejected: "Payment proof rejected",
   order_confirmed: "Order confirmed",
   order_ready: "Order marked ready",
-  total_ready: "Total emailed",
   proof_rejected: "Proof rejection emailed",
   order_cancelled: "Order cancelled",
 };
@@ -31,7 +29,6 @@ const EVENT_LABEL: Record<string, string> = {
 const EMAIL_LABEL: Record<string, string> = {
   order_confirmed: "Confirmation email",
   proof_rejected: "Proof rejection email",
-  total_ready: "Total email",
   date_changed: "Date change email",
   order_cancelled: "Cancellation email",
   order_ready: "Ready email",
