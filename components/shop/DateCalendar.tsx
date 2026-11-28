@@ -120,7 +120,7 @@ export function DateCalendar({
         className={cn(
           "h-10 w-full rounded-md text-sm",
           CELL_STYLE[state],
-          selected && "bg-neutral-900 text-white hover:bg-neutral-800",
+          selected && "bg-crimson text-cream hover:bg-crimson-deep",
         )}
       >
         {day}
@@ -192,7 +192,7 @@ export function DateCalendar({
           Unavailable
         </li>
         <li className="flex items-center gap-2">
-          <span className="inline-block size-4 rounded-sm bg-neutral-900" />
+          <span className="inline-block size-4 rounded-sm bg-crimson" />
           Your date
         </li>
       </ul>
