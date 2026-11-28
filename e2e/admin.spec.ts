@@ -16,10 +16,12 @@ test.describe.configure({ timeout: 120_000 });
 
 /**
  * Each test books its own bookable day (0 is left to the order-flow specs), and the mobile project
- * uses days 20 later, so the desktop and mobile runs never book or block the same date.
+ * uses days 10 later, so the desktop and mobile runs never book or block the same date. The V2
+ * calendar only offers days up to 23 December (about 21 bookable days from late November), so the
+ * offset must stay inside that window.
  */
 function dayFor(base: number, testInfo: TestInfo): number {
-  return base + (testInfo.project.name === "mobile" ? 20 : 0);
+  return base + (testInfo.project.name === "mobile" ? 10 : 0);
 }
 
 /** Opens the payment queue on the admin side and the order's proof card. Returns the admin order id. */
