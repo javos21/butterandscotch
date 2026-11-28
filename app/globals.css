@@ -104,6 +104,7 @@
   --color-cream-warm: var(--cream-warm);
   --color-sage-wash: var(--sage-wash);
   --color-crimson: var(--crimson);
+  --color-beige: var(--beige);
   --color-crimson-deep: var(--crimson-deep);
   --color-oxblood: var(--oxblood);
   --color-olive-ink: var(--olive-ink);
@@ -124,6 +125,7 @@
   --cream-warm: #FFF0DE;
   --sage-wash: #E3E1C6;
   --crimson: #820914;
+  --beige: #F3E2C7;
   --crimson-deep: #6A0610;
   --oxblood: #560008;
   --olive-ink: #3E3A0E;

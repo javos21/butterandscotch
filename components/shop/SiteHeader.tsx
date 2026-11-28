@@ -1,19 +1,20 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, Search, UtensilsCrossed, MessageCircle } from "lucide-react";
 import { CartLink } from "@/components/shop/CartLink";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-/** Storefront header (DESIGN.md "Navigation"): Menu sheet, centred logo, Find my order and Basket. */
+/**
+ * Storefront header (spec "Navigation bar"): brand red bar, beige text, larger centred logo.
+ * The logo file is red, so it is inverted to beige on the bar.
+ */
 export function SiteHeader({ whatsappHref }: { whatsappHref: string | null }) {
   return (
-    <header className="bg-cream">
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 pt-3 pb-2">
+    <header className="bg-crimson text-beige">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 pt-3 pb-3">
         <Sheet>
           <SheetTrigger
-            className="flex min-h-11 items-center gap-2 justify-self-start rounded-xl px-2 text-crimson-deep hover:bg-cream-warm"
+            className="flex min-h-11 items-center gap-2 justify-self-start rounded-xl px-2 text-beige hover:bg-crimson-deep"
             aria-label="Open menu"
           >
             <Menu className="size-7" strokeWidth={1.75} aria-hidden="true" />
@@ -52,20 +53,18 @@ export function SiteHeader({ whatsappHref }: { whatsappHref: string | null }) {
             width={471}
             height={238}
             priority
-            className="h-14 w-auto sm:h-16"
+            className="h-16 w-auto brightness-0 invert sm:h-20"
           />
         </Link>
 
         <div className="flex items-center gap-1 justify-self-end sm:gap-3">
           <Link
             href="/find-order"
-            className="hidden min-h-11 items-center rounded-xl px-2 text-center text-sm font-bold leading-tight text-crimson-deep hover:bg-cream-warm sm:flex"
+            className="flex min-h-11 items-center whitespace-nowrap rounded-xl px-1 text-[0.8125rem] font-bold text-beige hover:bg-crimson-deep sm:px-2 sm:text-sm"
           >
-            Find my
-            <br />
-            order
+            Find my order
           </Link>
-          <span className="hidden h-9 w-px bg-olive-line sm:block" aria-hidden="true" />
+          <span className="hidden h-9 w-px bg-beige/40 sm:block" aria-hidden="true" />
           <CartLink />
         </div>
       </div>

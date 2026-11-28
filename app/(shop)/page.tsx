@@ -1,7 +1,6 @@
-import Image from "next/image";
-import { CalendarDays, Landmark, ReceiptText, ShoppingBasket, CalendarCheck } from "lucide-react";
-import { HollyDivider } from "@/components/shop/HollyDivider";
+import { ReceiptText, ShoppingBasket, CalendarCheck } from "lucide-react";
 import { MenuItemCard } from "@/components/shop/MenuItemCard";
+import { formatMonthDay } from "@/lib/format-date";
 import { getMenu } from "@/lib/data/menu";
 import { getPublicSettings } from "@/lib/data/settings";
 import { waLink } from "@/lib/phone";
@@ -20,23 +19,20 @@ export default async function MenuPage() {
 
   return (
     <main>
-      <section className="mx-auto max-w-6xl px-4 pt-2 text-center">
-        {festive ? <HollyDivider className="mb-3" /> : null}
-        <h1 className="mx-auto max-w-[14ch] font-display text-[clamp(2.4rem,9vw,4.25rem)] leading-[1.04] tracking-[-0.01em] text-oxblood">
+      <section className="mx-auto max-w-6xl px-4 pt-4 text-center">
+        <h1 className="whitespace-nowrap font-display text-[clamp(1.25rem,5.2vw,3rem)] leading-tight tracking-[-0.01em] text-oxblood">
           {copy.heroTitle}
         </h1>
       </section>
 
+      {/* Placeholder until the owner's "Hero Image" file from the shared Drive folder is added. */}
       <div className="mx-auto mt-6 max-w-6xl md:px-4">
-        <div className="relative aspect-[4/3] overflow-hidden md:aspect-[21/9] md:rounded-[22px]">
-          <Image
-            src={SEASON.heroImage.src}
-            alt={SEASON.heroImage.alt}
-            fill
-            priority
-            sizes="(min-width: 1152px) 1120px, 100vw"
-            className="object-cover"
-          />
+        <div
+          role="img"
+          aria-label="Hero image to come"
+          className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-cream-warm text-olive md:aspect-[21/9] md:rounded-[22px]"
+        >
+          <span className="text-base font-bold">Hero image to come</span>
         </div>
       </div>
 
@@ -47,26 +43,24 @@ export default async function MenuPage() {
           </p>
         )}
 
-        <div className="mt-5 flex items-center justify-center gap-3 text-[0.875rem] font-bold whitespace-nowrap text-olive-ink min-[400px]:gap-4 min-[400px]:text-[0.9375rem] sm:text-base">
-          <span className="flex items-center gap-2">
-            <CalendarDays className="size-6 text-olive" strokeWidth={1.75} aria-hidden="true" />
-            {settings.lead_time_days}-day lead time
-          </span>
-          <span className="h-7 w-px bg-olive-line" aria-hidden="true" />
-          <span className="flex items-center gap-2">
-            <Landmark className="size-6 text-olive" strokeWidth={1.75} aria-hidden="true" />
-            Bank transfer
-          </span>
-        </div>
+        <ul className="mt-5 space-y-1 text-center text-lg font-bold text-olive-ink">
+          <li>{settings.lead_time_days}-day lead time</li>
+          <li>Orders close on {formatMonthDay(settings.order_close_date)}</li>
+          <li>Last day for delivery/pickup {formatMonthDay(settings.last_fulfilment_date)}</li>
+        </ul>
       </div>
 
       {settings.store_open ? (
         <div id="menu" className="mx-auto max-w-6xl scroll-mt-4 space-y-12 px-4 pt-12">
+          {festive ? (
+            <h2 className="text-center font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-[1.1] text-crimson-deep">
+              Our Christmas Menu
+            </h2>
+          ) : null}
           {menu.sections.map((section) =>
             section.items.length === 0 ? null : (
               <section key={section.id} aria-labelledby={`section-${section.id}`} className="space-y-5">
                 <div className="space-y-2 text-center">
-                  {festive ? <HollyDivider /> : null}
                   <h2 id={`section-${section.id}`} className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-[1.1] text-crimson-deep">
                     {section.name}
                   </h2>
